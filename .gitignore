@@ -1,0 +1,23 @@
+# Dépendances
+node_modules/
+.pnpm-store/
+
+# Builds
+dist/
+build/
+.next/
+out/
+
+# Tests / couverture
+coverage/
+
+# Environnement
+.env
+.env.*
+!.env.example
+
+# Logs / divers
+*.log
+.DS_Store
+.idea/
+*.tsbuildinfo
