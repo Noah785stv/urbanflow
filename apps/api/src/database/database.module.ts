@@ -14,7 +14,8 @@ import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
         autoLoadEntities: true,
         // Mapping snake_case automatique (tables/colonnes — §4.2)
         namingStrategy: new SnakeNamingStrategy(),
-        // Confort en dev uniquement ; en prod on passera par des migrations.
+        // Confort en dev uniquement ; en CI comme en prod, le schéma est posé
+        // par migration (`pnpm migration:run`) — voir .github/workflows/ci.yml.
         synchronize: config.get<string>('NODE_ENV') === 'development',
       }),
     }),

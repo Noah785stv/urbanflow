@@ -64,5 +64,21 @@ jobs:
           DATABASE_URL: postgresql://urbanflow:urbanflow@localhost:5432/urbanflow_test
           REDIS_URL: redis://localhost:6379
 
+      - name: Run database migrations
+        run: pnpm --filter @urbanflow/api migration:run
+        env:
+          DATABASE_URL: postgresql://urbanflow:urbanflow@localhost:5432/urbanflow_test
+          NODE_ENV: test
+
+      - name: Test e2e
+        run: pnpm test:e2e
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://urbanflow:urbanflow@localhost:5432/urbanflow_test
+          REDIS_URL: redis://localhost:6379
+          JWT_SECRET: ci-only-jwt-secret-not-a-real-value
+          JWT_REFRESH_SECRET: ci-only-refresh-secret-not-a-real-value
+          ENCRYPTION_KEY: 4DUTb14VQ7ZTw3A4Kvux6xkkyGuNzXq1nO60U8p2dWc=
+
       - name: Build
         run: pnpm build
