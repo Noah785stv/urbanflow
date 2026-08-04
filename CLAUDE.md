@@ -51,6 +51,20 @@ packages/config       → configs ESLint / Prettier / tsconfig mutualisées
 docs/adr    → Architecture Decision Records
 ```
 
+> ⚠️ **Contrainte `packages/shared-types` (divergence signalée, F1).**
+> Le package n'a pas d'étape de build : `package.json` pointe `main`/`types`
+> directement vers `src/index.ts`, consommé tel quel aussi bien en dev
+> (ts-node/webpack) qu'en prod (`node dist/main.js` via `start:prod`, qui
+> s'appuie sur le "type-stripping" natif de Node — lequel n'efface que les
+> syntaxes TS effaçables). Conséquence : **n'utiliser dans `shared-types` que
+> des constructions TS effaçables** (types, interfaces, `as const` + type
+> dérivé) — **jamais `enum`, `namespace`, décorateurs ou paramètres de
+> constructeur avec modificateur d'accès**, qui génèrent du code runtime non
+> supporté par le type-stripping natif. `TransportMode` suit ce pattern
+> (`export const TransportMode = {...} as const` + `export type TransportMode
+> = (typeof TransportMode)[keyof typeof TransportMode]`), à reproduire pour
+> tout futur type partagé nécessitant une valeur runtime.
+
 ## Conventions de nommage (§4.2 — univoques et homogènes)
 
 | Élément                       | Convention            | Exemple                       |
@@ -143,7 +157,19 @@ trajet est confirmé), chiffrement des points domicile/travail.
 
 ## Commandes du projet
 
-> À compléter au fur et à mesure du setup (install, dev, test, lint, build, db).
+Depuis la racine du monorepo (sauf mention contraire) :
+
+| Commande | Effet |
+| :---- | :---- |
+| `pnpm install` | Installe les dépendances de tous les workspaces |
+| `pnpm db:up` / `pnpm db:down` | Démarre / arrête Postgres (PostGIS) + Redis (docker-compose) |
+| `pnpm dev` | Démarre `apps/web` et `apps/api` en parallèle (mode watch) |
+| `pnpm build` | Build de tous les workspaces |
+| `pnpm test` / `pnpm test:e2e` | Tests unitaires / d'intégration (tous workspaces) |
+| `pnpm lint` / `pnpm typecheck` / `pnpm format` | Qualité de code |
+| `pnpm --filter @urbanflow/api migration:run` | Applique les migrations TypeORM (voir `apps/api/README.md`) |
+
+Détail des commandes et variables d'environnement du backend : `apps/api/README.md`.
 
 ## Ce qu'il ne faut JAMAIS faire
 
