@@ -1,0 +1,21 @@
+{
+  "journeys": [
+    {
+      "departure_date_time": "20260810T143000",
+      "arrival_date_time": "20260810T145500",
+      "duration": 1500,
+      "sections": [
+        {
+          "type": "street_network",
+          "mode": "walking",
+          "duration": 300
+        },
+        {
+          "type": "public_transport",
+          "duration": 1200,
+          "display_informations": { "physical_mode": "Tramway" }
+        }
+      ]
+    }
+  ]
+}
