@@ -39,16 +39,20 @@ pnpm start:dev             # démarre l'API en mode watch — http://localhost:3
 
 Définies et validées (Joi, fail-fast au démarrage) dans `src/config/env.validation.ts`.
 
-| Variable                                        | Description                                                        |
-| :---------------------------------------------- | :----------------------------------------------------------------- |
-| `NODE_ENV`                                      | `development` \| `test` \| `production`                            |
-| `API_PORT`                                      | Port HTTP de l'API (défaut `3001`)                                 |
-| `DATABASE_URL`                                  | URL de connexion PostgreSQL                                        |
-| `REDIS_URL`                                     | URL de connexion Redis (sessions, tokens, cache)                   |
-| `JWT_SECRET` / `JWT_EXPIRES_IN`                 | Secret et durée de vie de l'access token (défaut `15m`)            |
-| `JWT_REFRESH_SECRET` / `JWT_REFRESH_EXPIRES_IN` | Secret et durée de vie du refresh token (défaut `7d`)              |
-| `ENCRYPTION_KEY`                                | Clé AES-256-GCM (32 octets, base64) — chiffrement domicile/travail |
-| `CORS_ORIGIN`                                   | Origine autorisée pour le front (défaut `http://localhost:3000`)   |
+| Variable                                        | Description                                                         |
+| :---------------------------------------------- | :------------------------------------------------------------------ |
+| `NODE_ENV`                                      | `development` \| `test` \| `production`                             |
+| `API_PORT`                                      | Port HTTP de l'API (défaut `3001`)                                  |
+| `DATABASE_URL`                                  | URL de connexion PostgreSQL                                         |
+| `REDIS_URL`                                     | URL de connexion Redis (sessions, tokens, cache)                    |
+| `JWT_SECRET` / `JWT_EXPIRES_IN`                 | Secret et durée de vie de l'access token (défaut `15m`)             |
+| `JWT_REFRESH_SECRET` / `JWT_REFRESH_EXPIRES_IN` | Secret et durée de vie du refresh token (défaut `7d`)               |
+| `ENCRYPTION_KEY`                                | Clé AES-256-GCM (32 octets, base64) — chiffrement domicile/travail  |
+| `CORS_ORIGIN`                                   | Origine autorisée pour le front (défaut `http://localhost:3000`)    |
+| `NAVITIA_API_KEY`                               | Clé API navitia.io                                                  |
+| `NAVITIA_BASE_URL`                              | URL de base Navitia (défaut `https://api.navitia.io/v1`)            |
+| `NAVITIA_COVERAGE`                              | Région de couverture Navitia — **à confirmer contre la doc à jour** |
+| `GBFS_FEED_URLS`                                | Liste JSON des URLs d'auto-découverte `gbfs.json` par opérateur     |
 
 Génération de secrets : `openssl rand -base64 32`.
 
@@ -90,9 +94,58 @@ MFA, OAuth France Connect, envoi d'e-mail réel (lien journalisé en console en
 dev) et job de purge RGPD à 30 j sont des incréments séparés, non implémentés
 ici.
 
+## Module Integration & Transport (F3)
+
+Abstraction `TransportProvider` (GBFS, Navitia) derrière un `ProviderRegistry`
+(spec : `docs/specs/F3-integration.md`). C'est le **seul** point de contact
+avec les APIs de transport externes.
+
+| Méthode | Route                          | Auth                | Description                                                                                      |
+| :------ | :----------------------------- | :------------------ | :----------------------------------------------------------------------------------------------- |
+| GET     | `/api/v1/stations/nearby`      | Bearer access token | Stations à proximité (PostGIS `ST_DWithin`), triées par distance, enrichies du statut temps réel |
+| GET     | `/api/v1/stops/:id/departures` | Bearer access token | Prochains passages à un arrêt (mode dégradé si la source est HS)                                 |
+
+`stations/nearby` prend `lat`, `lng` (obligatoires) et `radius` en mètres
+(optionnel, 50–2000, défaut 500).
+
+### Points clés (§5, §7, §9)
+
+- **`TransportProvider`** : interfaces ségréguées (`SharedMobilityProvider`,
+  `TransitProvider`, `RoutingProvider`) — ajouter un opérateur = implémenter
+  l'interface adéquate et l'enregistrer dans `IntegrationModule`, sans toucher
+  au reste.
+- **Cache dégradé** (`DegradedCacheService`, générique et réutilisable) :
+  fenêtre de fraîcheur ≤ 60 s pour les données temps réel, TTL Redis plus long
+  en filet de secours — en cas de panne d'une source, la dernière valeur
+  connue est servie (`stale: true`) ; sans historique, une réponse vide
+  explicitement signalée est renvoyée. **Aucune panne externe ne bloque
+  l'API.**
+- **Synchronisation périodique** (`@nestjs/schedule`, toutes les 10 min) pour
+  l'inventaire des stations GBFS (`station_information`, PostGIS) — les
+  disponibilités temps réel sont rafraîchies à la demande, pas par le
+  scheduler.
+- **Liste blanche SSRF (A10)** : seuls `NAVITIA_BASE_URL` et les hôtes dérivés
+  de `GBFS_FEED_URLS` sont appelés ; les sous-flux découverts via `gbfs.json`
+  sont vérifiés contre l'hôte de découverte configuré.
+
+### Hors périmètre F3 (voir spec §2, §14)
+
+GTFS-RT (positions temps réel via protobuf) est reporté — traité en second
+temps une fois GBFS et Navitia stabilisés. L'endpoint planificateur
+(comparaison de plusieurs itinéraires) appartient à F2 ; F3 fournit
+uniquement `RoutingProvider.getJourneys` comme brique brute, sans endpoint
+dédié.
+
+**Simplification assumée** : les stations GBFS sont toutes typées
+`StationType.Dock` (GBFS ne distingue le véhicule qu'au niveau de
+`vehicle_types.json`, hors périmètre de ce premier incrément). Le mapping des
+modes Navitia (`NAVITIA_MODE_MAP`) et le calcul de distance par tronçon
+d'itinéraire (`distanceMeters`) sont des approximations à affiner avec un
+échantillon réel de réponse Navitia (F2).
+
 ### OpenAPI
 
 Non généré automatiquement pour cet incrément (pas de `@nestjs/swagger` dans
-les dépendances approuvées — voir `docs/specs/F1-auth.md` §8). Le tableau
-ci-dessus fait référence tant qu'une génération OpenAPI n'est pas mise en
+les dépendances approuvées — voir `docs/specs/F1-auth.md` §8). Les tableaux
+ci-dessus font référence tant qu'une génération OpenAPI n'est pas mise en
 place.

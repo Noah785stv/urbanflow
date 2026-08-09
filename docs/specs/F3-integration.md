@@ -16,6 +16,7 @@ connaisse les APIs sous-jacentes.
 ## 2. Périmètre de l'incrément
 
 **Inclus (F3) :**
+
 - Abstraction `TransportProvider` (interfaces ségréguées) + registre de providers.
 - Provider **GBFS** : inventaire des stations vélos/trottinettes (statique →
   PostGIS) + disponibilités temps réel (→ Redis).
@@ -26,6 +27,7 @@ connaisse les APIs sous-jacentes.
 - Endpoints exposant stations à proximité et prochains passages.
 
 **Phasé / reporté (à tracer) :**
+
 - Provider **GTFS-RT** (positions/passages temps réel via protobuf) : plus complexe
   (décodage `gtfs-realtime-bindings`) — implémentable en second temps dans F3.
 - L'**endpoint planificateur** (3 options, filtres, comparaison) appartient à **F2**.
@@ -49,17 +51,17 @@ Les informations de station changent rarement : on les **persiste**. PostGIS ent
 ici pour les requêtes de proximité (résout la note laissée en F1 ; concrétise le
 choix TypeORM+PostGIS, ADR-004).
 
-| Colonne | Type | Contraintes |
-| :---- | :---- | :---- |
-| id | uuid | PK |
-| tenant_id | uuid | non nul |
-| provider | varchar | ex. `gbfs:velostar`, `navitia` |
-| external_id | varchar | identifiant de la station chez la source |
-| name | varchar | non nul |
-| station_type | enum | `bike` \| `scooter` \| `dock` \| `transit_stop` |
-| location | `geography(Point,4326)` | non nul, index **GiST** (PostGIS) |
-| capacity | int | nullable |
-| created_at / updated_at | timestamptz | auto |
+| Colonne                 | Type                    | Contraintes                                     |
+| :---------------------- | :---------------------- | :---------------------------------------------- |
+| id                      | uuid                    | PK                                              |
+| tenant_id               | uuid                    | non nul                                         |
+| provider                | varchar                 | ex. `gbfs:velostar`, `navitia`                  |
+| external_id             | varchar                 | identifiant de la station chez la source        |
+| name                    | varchar                 | non nul                                         |
+| station_type            | enum                    | `bike` \| `scooter` \| `dock` \| `transit_stop` |
+| location                | `geography(Point,4326)` | non nul, index **GiST** (PostGIS)               |
+| capacity                | int                     | nullable                                        |
+| created_at / updated_at | timestamptz             | auto                                            |
 
 Contrainte d'unicité : `(provider, external_id)`. Extension à activer par
 migration : `CREATE EXTENSION IF NOT EXISTS postgis;`.
@@ -92,11 +94,11 @@ partagés avec le front et F2.
 
 ## 6. Sources & standards
 
-| Source | Standard | Rôle dans F3 |
-| :---- | :---- | :---- |
-| Navitia (`api.navitia.io`) | agrège GTFS national | prochains passages + routing (F2) |
-| Feeds GBFS opérateurs | GBFS | stations + dispo vélos/trottinettes |
-| Flux opérateur temps réel | GTFS-RT | passages temps réel (phasé) |
+| Source                     | Standard             | Rôle dans F3                        |
+| :------------------------- | :------------------- | :---------------------------------- |
+| Navitia (`api.navitia.io`) | agrège GTFS national | prochains passages + routing (F2)   |
+| Feeds GBFS opérateurs      | GBFS                 | stations + dispo vélos/trottinettes |
+| Flux opérateur temps réel  | GTFS-RT              | passages temps réel (phasé)         |
 
 > Consulter la **documentation Navitia et la spec GBFS à jour** au moment de
 > l'implémentation (formats de requête/réponse, région de couverture). Vérifier que
@@ -117,33 +119,36 @@ partagés avec le front et F2.
 
 Sous `/api/v1`, `kebab-case`, DTO validés (`ValidationPipe` global).
 
-| Méthode | Route | Auth | Description |
-| :---- | :---- | :---- | :---- |
-| GET | `/api/v1/stations/nearby?lat=&lng=&radius=` | oui | Stations à proximité (PostGIS `ST_DWithin`) enrichies du statut temps réel (Redis) |
-| GET | `/api/v1/stops/:id/departures` | oui | Prochains passages à un arrêt (temps réel, mode dégradé si source HS) |
+| Méthode | Route                                       | Auth | Description                                                                        |
+| :------ | :------------------------------------------ | :--- | :--------------------------------------------------------------------------------- |
+| GET     | `/api/v1/stations/nearby?lat=&lng=&radius=` | oui  | Stations à proximité (PostGIS `ST_DWithin`) enrichies du statut temps réel (Redis) |
+| GET     | `/api/v1/stops/:id/departures`              | oui  | Prochains passages à un arrêt (temps réel, mode dégradé si source HS)              |
 
 Le paramètre `radius` est borné (min/max) pour éviter les requêtes abusives. Les
 réponses indiquent la fraîcheur des données (`stale`, `updatedAt`).
 
 ## 9. Sécurité & contraintes
 
-| Réf | Mesure dans F3 |
-| :---- | :---- |
-| A10 SSRF (§5.7) | Appels sortants **uniquement** vers les hôtes en liste blanche (Navitia + feeds configurés) ; aucune URL contrôlée par l'utilisateur |
-| A01 (§5.7) | Endpoints protégés par `JwtAuthGuard` (réutilise F1) |
-| Secrets | Clé API Navitia et URLs de feeds via variables d'environnement, jamais en dur |
-| C9 Interopérabilité | Respect strict de GTFS/GBFS ; abstraction prête pour NeTEx/SIRI |
-| C10 Performances | Cache Redis, mode dégradé, requêtes spatiales indexées (GiST) |
+| Réf                 | Mesure dans F3                                                                                                                       |
+| :------------------ | :----------------------------------------------------------------------------------------------------------------------------------- |
+| A10 SSRF (§5.7)     | Appels sortants **uniquement** vers les hôtes en liste blanche (Navitia + feeds configurés) ; aucune URL contrôlée par l'utilisateur |
+| A01 (§5.7)          | Endpoints protégés par `JwtAuthGuard` (réutilise F1)                                                                                 |
+| Secrets             | Clé API Navitia et URLs de feeds via variables d'environnement, jamais en dur                                                        |
+| C9 Interopérabilité | Respect strict de GTFS/GBFS ; abstraction prête pour NeTEx/SIRI                                                                      |
+| C10 Performances    | Cache Redis, mode dégradé, requêtes spatiales indexées (GiST)                                                                        |
 
 ## 10. Configuration & dépendances
 
 **Dépendances** (`apps/api`) :
+
 ```
 @nestjs/axios axios @nestjs/schedule
 ```
+
 Pour la phase GTFS-RT : `gtfs-realtime-bindings` (+ `protobufjs`).
 
 **Variables d'environnement** (dans `.env`, `.env.example`, `env.validation.ts`) :
+
 ```
 NAVITIA_API_KEY=...
 NAVITIA_BASE_URL=https://api.navitia.io/v1
