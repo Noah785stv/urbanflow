@@ -13,6 +13,7 @@ personnalisation ultérieure (planificateur F2, calculateur carbone F4) en dépe
 ## 2. Périmètre de l'incrément
 
 **Inclus (F1) :**
+
 - Inscription avec e-mail + mot de passe, vérification d'e-mail.
 - Connexion (JWT access + refresh), rafraîchissement, déconnexion.
 - RBAC minimal (rôles `citizen`, `premium`, `admin`).
@@ -22,6 +23,7 @@ personnalisation ultérieure (planificateur F2, calculateur carbone F4) en dépe
 - Rate limiting sur les routes d'authentification.
 
 **Reporté (hors F1, à tracer dans la roadmap) :**
+
 - Double authentification (MFA) — prévue mais non implémentée dans cet incrément.
 - OAuth France Connect — V2 (cf. §4.4).
 - Envoi d'e-mail réel — en F1, le lien de vérification est journalisé (console) en
@@ -45,33 +47,33 @@ TypeORM** pour ces tables fait partie de la DoD.
 
 ### 4.1 Entité `user`
 
-| Colonne | Type | Contraintes |
-| :---- | :---- | :---- |
-| id | uuid | PK, généré |
-| tenant_id | uuid | non nul, défaut tenant courant (multi-tenancy §5.4) |
-| email | citext / varchar | unique (par tenant), non nul, normalisé en minuscules |
-| password_hash | varchar | non nul (bcrypt) |
-| email_verified | boolean | défaut `false` |
-| role | enum `user_role` | `citizen` (défaut) \| `premium` \| `admin` |
-| deleted_at | timestamptz | nullable (suppression RGPD, soft-delete) |
-| created_at / updated_at | timestamptz | auto |
+| Colonne                 | Type             | Contraintes                                           |
+| :---------------------- | :--------------- | :---------------------------------------------------- |
+| id                      | uuid             | PK, généré                                            |
+| tenant_id               | uuid             | non nul, défaut tenant courant (multi-tenancy §5.4)   |
+| email                   | citext / varchar | unique (par tenant), non nul, normalisé en minuscules |
+| password_hash           | varchar          | non nul (bcrypt)                                      |
+| email_verified          | boolean          | défaut `false`                                        |
+| role                    | enum `user_role` | `citizen` (défaut) \| `premium` \| `admin`            |
+| deleted_at              | timestamptz      | nullable (suppression RGPD, soft-delete)              |
+| created_at / updated_at | timestamptz      | auto                                                  |
 
 Relation : `user` 1—1 `mobility_profile`.
 
 ### 4.2 Entité `mobility_profile`
 
-| Colonne | Type | Contraintes |
-| :---- | :---- | :---- |
-| id | uuid | PK |
-| user_id | uuid | FK → user, unique, non nul |
-| preferred_modes | jsonb / text[] | liste de `TransportMode` (depuis `@urbanflow/shared-types`) |
-| constraints | jsonb | `{ pmr: boolean, personalBike: boolean }` |
-| transport_subscriptions | text[] | libellés d'abonnements (ex. « STAR illimité ») |
-| home_location_encrypted | text | nullable, chiffré (voir §4.3) |
-| work_location_encrypted | text | nullable, chiffré (voir §4.3) |
-| geolocation_consent | boolean | défaut `false` |
-| geolocation_consent_at | timestamptz | nullable |
-| created_at / updated_at | timestamptz | auto |
+| Colonne                 | Type           | Contraintes                                                 |
+| :---------------------- | :------------- | :---------------------------------------------------------- |
+| id                      | uuid           | PK                                                          |
+| user_id                 | uuid           | FK → user, unique, non nul                                  |
+| preferred_modes         | jsonb / text[] | liste de `TransportMode` (depuis `@urbanflow/shared-types`) |
+| constraints             | jsonb          | `{ pmr: boolean, personalBike: boolean }`                   |
+| transport_subscriptions | text[]         | libellés d'abonnements (ex. « STAR illimité »)              |
+| home_location_encrypted | text           | nullable, chiffré (voir §4.3)                               |
+| work_location_encrypted | text           | nullable, chiffré (voir §4.3)                               |
+| geolocation_consent     | boolean        | défaut `false`                                              |
+| geolocation_consent_at  | timestamptz    | nullable                                                    |
+| created_at / updated_at | timestamptz    | auto                                                        |
 
 ### 4.3 Chiffrement domicile/travail (décision de conception — À SIGNALER)
 
@@ -91,6 +93,7 @@ A02, C8).
 ## 5. Règles métier
 
 ### 5.1 Inscription
+
 - E-mail valide et unique (par tenant), normalisé en minuscules.
 - Mot de passe **≥ 12 caractères** (validation `class-validator` sur le DTO).
 - Hachage **bcrypt, cost 12** (§5.7 A02). Le mot de passe en clair ne quitte jamais
@@ -99,6 +102,7 @@ A02, C8).
   (`REDIS_CLIENT` déjà dispo), TTL 24 h ; en dev, le lien est journalisé.
 
 ### 5.2 Connexion / session
+
 - `login` retourne un **access token** (TTL `JWT_EXPIRES_IN`, 15 min) et un
   **refresh token** (TTL `JWT_REFRESH_EXPIRES_IN`, ex. 7 j).
 - Le refresh token (ou son `jti`) est suivi dans Redis pour permettre la
@@ -107,12 +111,14 @@ A02, C8).
   l'e-mail ou le mot de passe qui est faux).
 
 ### 5.3 Profil
+
 - Le profil est créé (vide) à l'inscription, puis complété via `PATCH`.
 - `preferred_modes` n'accepte que des valeurs de l'enum `TransportMode`.
 - Écrire un point domicile/travail exige `geolocation_consent = true`
   (horodaté dans `geolocation_consent_at`).
 
 ### 5.4 Suppression de compte (RGPD)
+
 - `DELETE /users/me` : soft-delete (`deleted_at`), anonymisation immédiate des
   données directement identifiantes, révocation des tokens.
 - Un compte supprimé ne peut plus se connecter.
@@ -124,40 +130,43 @@ A02, C8).
 Toutes les routes sous `/api/v1`, en `kebab-case` (§4.2). DTO validés par le
 `ValidationPipe` global (`whitelist`, `transform`).
 
-| Méthode | Route | Auth | Description |
-| :---- | :---- | :---- | :---- |
-| POST | `/api/v1/auth/register` | non | Crée un compte + profil vide, déclenche la vérif e-mail |
-| POST | `/api/v1/auth/verify-email` | non | Valide l'e-mail via token |
-| POST | `/api/v1/auth/login` | non | Retourne access + refresh tokens |
-| POST | `/api/v1/auth/refresh` | refresh | Renouvelle l'access token |
-| POST | `/api/v1/auth/logout` | oui | Révoque le refresh token |
-| GET | `/api/v1/users/me` | oui | Profil de l'utilisateur courant |
-| PATCH | `/api/v1/users/me` | oui | Met à jour le profil de mobilité |
-| DELETE | `/api/v1/users/me` | oui | Suppression de compte (RGPD) |
+| Méthode | Route                       | Auth    | Description                                             |
+| :------ | :-------------------------- | :------ | :------------------------------------------------------ |
+| POST    | `/api/v1/auth/register`     | non     | Crée un compte + profil vide, déclenche la vérif e-mail |
+| POST    | `/api/v1/auth/verify-email` | non     | Valide l'e-mail via token                               |
+| POST    | `/api/v1/auth/login`        | non     | Retourne access + refresh tokens                        |
+| POST    | `/api/v1/auth/refresh`      | refresh | Renouvelle l'access token                               |
+| POST    | `/api/v1/auth/logout`       | oui     | Révoque le refresh token                                |
+| GET     | `/api/v1/users/me`          | oui     | Profil de l'utilisateur courant                         |
+| PATCH   | `/api/v1/users/me`          | oui     | Met à jour le profil de mobilité                        |
+| DELETE  | `/api/v1/users/me`          | oui     | Suppression de compte (RGPD)                            |
 
 Les réponses n'exposent jamais `password_hash` ni les valeurs chiffrées en clair
 (utiliser un `class-transformer` / sérialisation explicite).
 
 ## 7. Sécurité (mapping OWASP §5.7)
 
-| Risque | Mesure dans F1 |
-| :---- | :---- |
-| A01 Access Control | `JwtAuthGuard` + `RolesGuard` (+ `@Roles()`), accès `me` limité au propriétaire |
-| A02 Cryptographic | bcrypt cost 12 ; AES-256-GCM pour domicile/travail ; secrets via env |
-| A03 Injection | Requêtes paramétrées TypeORM + DTO `class-validator` |
-| A05 Misconfig | Helmet + CORS déjà en place (`main.ts`) |
-| A07 Auth Failures | Politique de mot de passe, rate limiting (`@nestjs/throttler`) sur `register`/`login`, erreurs génériques |
+| Risque             | Mesure dans F1                                                                                            |
+| :----------------- | :-------------------------------------------------------------------------------------------------------- |
+| A01 Access Control | `JwtAuthGuard` + `RolesGuard` (+ `@Roles()`), accès `me` limité au propriétaire                           |
+| A02 Cryptographic  | bcrypt cost 12 ; AES-256-GCM pour domicile/travail ; secrets via env                                      |
+| A03 Injection      | Requêtes paramétrées TypeORM + DTO `class-validator`                                                      |
+| A05 Misconfig      | Helmet + CORS déjà en place (`main.ts`)                                                                   |
+| A07 Auth Failures  | Politique de mot de passe, rate limiting (`@nestjs/throttler`) sur `register`/`login`, erreurs génériques |
 
 ## 8. Configuration & dépendances
 
 **Nouvelles dépendances** (à ajouter sur `apps/api`) :
+
 ```
 @nestjs/jwt @nestjs/passport passport passport-jwt @nestjs/throttler bcrypt @urbanflow/shared-types@workspace:*
 ```
+
 Dev : `@types/passport-jwt @types/bcrypt`.
 
 **Nouvelles variables d'environnement** (à ajouter dans `.env`, `.env.example`
 et le schéma `env.validation.ts`) :
+
 ```
 JWT_REFRESH_SECRET=...              # openssl rand -base64 32
 JWT_REFRESH_EXPIRES_IN=7d

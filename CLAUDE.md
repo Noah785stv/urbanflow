@@ -30,16 +30,16 @@ Projet de certification **Titre 6 CDSD (RNCP 36146)**, session septembre 2026.
 
 ## Stack technique (verrouillée — §2.5)
 
-| Brique        | Choix                                |
-| ------------- | ------------------------------------ |
-| Frontend      | Next.js (PWA, SSR/SSG)               |
-| Backend       | NestJS (monolithe modulaire)         |
-| Base de données | PostgreSQL + PostGIS               |
-| Cache         | Redis (cache + sessions)             |
-| ORM           | TypeORM (intégration NestJS, types spatiaux PostGIS) |
-| Cartographie  | Leaflet + OpenStreetMap              |
-| Routing       | API Navitia                          |
-| Langage       | TypeScript de bout en bout (strict)  |
+| Brique          | Choix                                                |
+| --------------- | ---------------------------------------------------- |
+| Frontend        | Next.js (PWA, SSR/SSG)                               |
+| Backend         | NestJS (monolithe modulaire)                         |
+| Base de données | PostgreSQL + PostGIS                                 |
+| Cache           | Redis (cache + sessions)                             |
+| ORM             | TypeORM (intégration NestJS, types spatiaux PostGIS) |
+| Cartographie    | Leaflet + OpenStreetMap                              |
+| Routing         | API Navitia                                          |
+| Langage         | TypeScript de bout en bout (strict)                  |
 
 ## Structure du monorepo (pnpm workspaces)
 
@@ -62,19 +62,19 @@ docs/adr    → Architecture Decision Records
 > constructeur avec modificateur d'accès**, qui génèrent du code runtime non
 > supporté par le type-stripping natif. `TransportMode` suit ce pattern
 > (`export const TransportMode = {...} as const` + `export type TransportMode
-> = (typeof TransportMode)[keyof typeof TransportMode]`), à reproduire pour
+= (typeof TransportMode)[keyof typeof TransportMode]`), à reproduire pour
 > tout futur type partagé nécessitant une valeur runtime.
 
 ## Conventions de nommage (§4.2 — univoques et homogènes)
 
-| Élément                       | Convention            | Exemple                       |
-| ----------------------------- | --------------------- | ----------------------------- |
-| Variables, fonctions (JS/TS)  | camelCase             | `calculateCarbonFootprint()`  |
-| Classes, composants, types    | PascalCase            | `TripPlannerService`          |
-| Constantes globales           | UPPER_SNAKE_CASE      | `EMISSION_FACTOR_BUS`         |
-| Routes d'API REST             | kebab-case, pluriel, versionné | `/api/v1/carbon-logs` |
-| Tables et colonnes BDD        | snake_case            | `carbon_log`, `user_id`       |
-| Branches Git                  | type/description-courte | `feature/carbon-calculator` |
+| Élément                      | Convention                     | Exemple                      |
+| ---------------------------- | ------------------------------ | ---------------------------- |
+| Variables, fonctions (JS/TS) | camelCase                      | `calculateCarbonFootprint()` |
+| Classes, composants, types   | PascalCase                     | `TripPlannerService`         |
+| Constantes globales          | UPPER_SNAKE_CASE               | `EMISSION_FACTOR_BUS`        |
+| Routes d'API REST            | kebab-case, pluriel, versionné | `/api/v1/carbon-logs`        |
+| Tables et colonnes BDD       | snake_case                     | `carbon_log`, `user_id`      |
+| Branches Git                 | type/description-courte        | `feature/carbon-calculator`  |
 
 **Lexique métier univoque** (n'utiliser QUE ces termes) : `Trip` (déplacement
 A→B complet), `Segment` (portion sur un seul mode), `Mode` (moyen de transport),
@@ -83,7 +83,7 @@ A→B complet), `Segment` (portion sur un seul mode), `Mode` (moyen de transport
 ## Invariants d'architecture (§5 — l'évolutivité motive chaque choix)
 
 - **Monolithe modulaire NestJS** : modules découplés par domaine. Un module doit
-  rester extractible en microservice sans refonte (principe *MonolithFirst*).
+  rester extractible en microservice sans refonte (principe _MonolithFirst_).
 - **Séparation des couches** : chaque couche ne connaît que la couche inférieure.
 - **Abstraction `TransportProvider`** : le module Integration est le SEUL point de
   contact avec les APIs externes (Navitia, GTFS-RT, GBFS). Ajouter un opérateur =
@@ -107,7 +107,7 @@ Entités : `user`, `mobility_profile`, `trip`, `trip_segment`, `emission_factor`
 - **F2** — Planificateur multimodal géolocalisé (≥ 3 options, temps réel, < 3 s).
 - **F3** — Intégration APIs transport (Navitia + GBFS + GTFS-RT, cache, mode dégradé).
 - **F4** — Calculateur d'empreinte carbone (fonctionnalité CLÉ) : `émissions(Trip)
-  = Σ [ distance(Segment) × facteur(Mode) ]`, tableau de bord, export PDF.
+= Σ [ distance(Segment) × facteur(Mode) ]`, tableau de bord, export PDF.
 
 ## Standards de qualité de code (§3.5)
 
@@ -159,15 +159,15 @@ trajet est confirmé), chiffrement des points domicile/travail.
 
 Depuis la racine du monorepo (sauf mention contraire) :
 
-| Commande | Effet |
-| :---- | :---- |
-| `pnpm install` | Installe les dépendances de tous les workspaces |
-| `pnpm db:up` / `pnpm db:down` | Démarre / arrête Postgres (PostGIS) + Redis (docker-compose) |
-| `pnpm dev` | Démarre `apps/web` et `apps/api` en parallèle (mode watch) |
-| `pnpm build` | Build de tous les workspaces |
-| `pnpm test` / `pnpm test:e2e` | Tests unitaires / d'intégration (tous workspaces) |
-| `pnpm lint` / `pnpm typecheck` / `pnpm format` | Qualité de code |
-| `pnpm --filter @urbanflow/api migration:run` | Applique les migrations TypeORM (voir `apps/api/README.md`) |
+| Commande                                       | Effet                                                        |
+| :--------------------------------------------- | :----------------------------------------------------------- |
+| `pnpm install`                                 | Installe les dépendances de tous les workspaces              |
+| `pnpm db:up` / `pnpm db:down`                  | Démarre / arrête Postgres (PostGIS) + Redis (docker-compose) |
+| `pnpm dev`                                     | Démarre `apps/web` et `apps/api` en parallèle (mode watch)   |
+| `pnpm build`                                   | Build de tous les workspaces                                 |
+| `pnpm test` / `pnpm test:e2e`                  | Tests unitaires / d'intégration (tous workspaces)            |
+| `pnpm lint` / `pnpm typecheck` / `pnpm format` | Qualité de code                                              |
+| `pnpm --filter @urbanflow/api migration:run`   | Applique les migrations TypeORM (voir `apps/api/README.md`)  |
 
 Détail des commandes et variables d'environnement du backend : `apps/api/README.md`.
 

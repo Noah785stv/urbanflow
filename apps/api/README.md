@@ -23,32 +23,32 @@ pnpm start:dev             # démarre l'API en mode watch — http://localhost:3
 
 ## Commandes
 
-| Commande | Description |
-| :---- | :---- |
-| `pnpm start:dev` | API en mode watch |
-| `pnpm build` / `pnpm start:prod` | Build puis exécution du build compilé |
-| `pnpm lint` | ESLint (flat config, corrige automatiquement) |
-| `pnpm typecheck` | Vérification TypeScript stricte, sans émission |
-| `pnpm test` | Tests unitaires (Jest) |
-| `pnpm test:cov` | Tests unitaires + rapport de couverture |
-| `pnpm test:e2e` | Tests d'intégration (Supertest) — nécessite Postgres/Redis démarrés |
-| `pnpm migration:generate <chemin>` | Génère une migration TypeORM à partir des entités |
-| `pnpm migration:run` / `pnpm migration:revert` | Applique / annule les migrations |
+| Commande                                       | Description                                                         |
+| :--------------------------------------------- | :------------------------------------------------------------------ |
+| `pnpm start:dev`                               | API en mode watch                                                   |
+| `pnpm build` / `pnpm start:prod`               | Build puis exécution du build compilé                               |
+| `pnpm lint`                                    | ESLint (flat config, corrige automatiquement)                       |
+| `pnpm typecheck`                               | Vérification TypeScript stricte, sans émission                      |
+| `pnpm test`                                    | Tests unitaires (Jest)                                              |
+| `pnpm test:cov`                                | Tests unitaires + rapport de couverture                             |
+| `pnpm test:e2e`                                | Tests d'intégration (Supertest) — nécessite Postgres/Redis démarrés |
+| `pnpm migration:generate <chemin>`             | Génère une migration TypeORM à partir des entités                   |
+| `pnpm migration:run` / `pnpm migration:revert` | Applique / annule les migrations                                    |
 
 ## Variables d'environnement
 
 Définies et validées (Joi, fail-fast au démarrage) dans `src/config/env.validation.ts`.
 
-| Variable | Description |
-| :---- | :---- |
-| `NODE_ENV` | `development` \| `test` \| `production` |
-| `API_PORT` | Port HTTP de l'API (défaut `3001`) |
-| `DATABASE_URL` | URL de connexion PostgreSQL |
-| `REDIS_URL` | URL de connexion Redis (sessions, tokens, cache) |
-| `JWT_SECRET` / `JWT_EXPIRES_IN` | Secret et durée de vie de l'access token (défaut `15m`) |
-| `JWT_REFRESH_SECRET` / `JWT_REFRESH_EXPIRES_IN` | Secret et durée de vie du refresh token (défaut `7d`) |
-| `ENCRYPTION_KEY` | Clé AES-256-GCM (32 octets, base64) — chiffrement domicile/travail |
-| `CORS_ORIGIN` | Origine autorisée pour le front (défaut `http://localhost:3000`) |
+| Variable                                        | Description                                                        |
+| :---------------------------------------------- | :----------------------------------------------------------------- |
+| `NODE_ENV`                                      | `development` \| `test` \| `production`                            |
+| `API_PORT`                                      | Port HTTP de l'API (défaut `3001`)                                 |
+| `DATABASE_URL`                                  | URL de connexion PostgreSQL                                        |
+| `REDIS_URL`                                     | URL de connexion Redis (sessions, tokens, cache)                   |
+| `JWT_SECRET` / `JWT_EXPIRES_IN`                 | Secret et durée de vie de l'access token (défaut `15m`)            |
+| `JWT_REFRESH_SECRET` / `JWT_REFRESH_EXPIRES_IN` | Secret et durée de vie du refresh token (défaut `7d`)              |
+| `ENCRYPTION_KEY`                                | Clé AES-256-GCM (32 octets, base64) — chiffrement domicile/travail |
+| `CORS_ORIGIN`                                   | Origine autorisée pour le front (défaut `http://localhost:3000`)   |
 
 Génération de secrets : `openssl rand -base64 32`.
 
@@ -57,16 +57,16 @@ Génération de secrets : `openssl rand -base64 32`.
 Implémente l'inscription, la connexion sécurisée et le profil de mobilité
 (spec : `docs/specs/F1-auth.md`). Toutes les routes sont sous `/api/v1`.
 
-| Méthode | Route | Auth | Description |
-| :---- | :---- | :---- | :---- |
-| POST | `/api/v1/auth/register` | — | Crée un compte + profil vide, journalise le lien de vérification (dev) |
-| POST | `/api/v1/auth/verify-email` | — | Valide l'e-mail via le token reçu |
-| POST | `/api/v1/auth/login` | — | Retourne `{ accessToken, refreshToken }` (échoue si e-mail non vérifié) |
-| POST | `/api/v1/auth/refresh` | Bearer refresh token | Émet un nouvel access token |
-| POST | `/api/v1/auth/logout` | Bearer access token | Révoque le refresh token courant |
-| GET | `/api/v1/users/me` | Bearer access token | Profil de l'utilisateur courant |
-| PATCH | `/api/v1/users/me` | Bearer access token | Met à jour le profil de mobilité |
-| DELETE | `/api/v1/users/me` | Bearer access token | Suppression de compte (RGPD, soft-delete + anonymisation) |
+| Méthode | Route                       | Auth                 | Description                                                             |
+| :------ | :-------------------------- | :------------------- | :---------------------------------------------------------------------- |
+| POST    | `/api/v1/auth/register`     | —                    | Crée un compte + profil vide, journalise le lien de vérification (dev)  |
+| POST    | `/api/v1/auth/verify-email` | —                    | Valide l'e-mail via le token reçu                                       |
+| POST    | `/api/v1/auth/login`        | —                    | Retourne `{ accessToken, refreshToken }` (échoue si e-mail non vérifié) |
+| POST    | `/api/v1/auth/refresh`      | Bearer refresh token | Émet un nouvel access token                                             |
+| POST    | `/api/v1/auth/logout`       | Bearer access token  | Révoque le refresh token courant                                        |
+| GET     | `/api/v1/users/me`          | Bearer access token  | Profil de l'utilisateur courant                                         |
+| PATCH   | `/api/v1/users/me`          | Bearer access token  | Met à jour le profil de mobilité                                        |
+| DELETE  | `/api/v1/users/me`          | Bearer access token  | Suppression de compte (RGPD, soft-delete + anonymisation)               |
 
 ### Points clés de sécurité (§5.7)
 
