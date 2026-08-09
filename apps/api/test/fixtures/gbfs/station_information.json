@@ -1,0 +1,20 @@
+{
+  "data": {
+    "stations": [
+      {
+        "station_id": "101",
+        "name": "République",
+        "lat": 48.1147,
+        "lon": -1.6794,
+        "capacity": 20
+      },
+      {
+        "station_id": "102",
+        "name": "Gares",
+        "lat": 48.1036,
+        "lon": -1.6726,
+        "capacity": 15
+      }
+    ]
+  }
+}
