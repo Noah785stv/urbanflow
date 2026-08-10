@@ -1,10 +1,17 @@
-import { ValidationPipe, VersioningType } from '@nestjs/common';
-import { NestFactory } from '@nestjs/core';
+import {
+  ClassSerializerInterceptor,
+  ValidationPipe,
+  VersioningType,
+} from '@nestjs/common';
+import { NestFactory, Reflector } from '@nestjs/core';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
+
+  // Arrêt propre (12-Factor) : ferme les connexions (Postgres, Redis) sur SIGTERM/SIGINT.
+  app.enableShutdownHooks();
 
   // En-têtes HTTP durcis (OWASP A05 — §5.7)
   app.use(helmet());
@@ -27,6 +34,11 @@ async function bootstrap(): Promise<void> {
       transform: true,
     }),
   );
+
+  // Filet de sécurité en complément de la sérialisation explicite des réponses :
+  // exclut tout champ @Exclude() (password_hash, valeurs chiffrées) si une entité
+  // devait un jour être renvoyée directement (§6).
+  app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
 
   const port = process.env.API_PORT ?? 3001;
   await app.listen(port);

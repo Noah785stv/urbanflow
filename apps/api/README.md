@@ -1,98 +1,98 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# @urbanflow/api
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Backend NestJS d'UrbanFlow Mobility — monolithe modulaire (voir `CLAUDE.md` à la
+racine du monorepo pour la stack, les conventions et la Definition of Done).
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Prérequis
 
-## Description
+- Node.js ≥ 20, pnpm ≥ 9
+- Docker (Postgres + Redis via `docker-compose.yml` à la racine)
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
-
-## Project setup
+## Mise en route
 
 ```bash
-$ pnpm install
+# à la racine du monorepo
+pnpm install
+pnpm db:up               # démarre Postgres (PostGIS) + Redis
+cp .env.example .env     # puis renseigner les secrets (voir tableau ci-dessous)
+
+# apps/api
+pnpm migration:run        # applique le schéma (tables user, mobility_profile…)
+pnpm start:dev             # démarre l'API en mode watch — http://localhost:3001/api/v1
 ```
 
-## Compile and run the project
+## Commandes
 
-```bash
-# development
-$ pnpm run start
+| Commande                                       | Description                                                         |
+| :--------------------------------------------- | :------------------------------------------------------------------ |
+| `pnpm start:dev`                               | API en mode watch                                                   |
+| `pnpm build` / `pnpm start:prod`               | Build puis exécution du build compilé                               |
+| `pnpm lint`                                    | ESLint (flat config, corrige automatiquement)                       |
+| `pnpm typecheck`                               | Vérification TypeScript stricte, sans émission                      |
+| `pnpm test`                                    | Tests unitaires (Jest)                                              |
+| `pnpm test:cov`                                | Tests unitaires + rapport de couverture                             |
+| `pnpm test:e2e`                                | Tests d'intégration (Supertest) — nécessite Postgres/Redis démarrés |
+| `pnpm migration:generate <chemin>`             | Génère une migration TypeORM à partir des entités                   |
+| `pnpm migration:run` / `pnpm migration:revert` | Applique / annule les migrations                                    |
 
-# watch mode
-$ pnpm run start:dev
+## Variables d'environnement
 
-# production mode
-$ pnpm run start:prod
-```
+Définies et validées (Joi, fail-fast au démarrage) dans `src/config/env.validation.ts`.
 
-## Run tests
+| Variable                                        | Description                                                        |
+| :---------------------------------------------- | :----------------------------------------------------------------- |
+| `NODE_ENV`                                      | `development` \| `test` \| `production`                            |
+| `API_PORT`                                      | Port HTTP de l'API (défaut `3001`)                                 |
+| `DATABASE_URL`                                  | URL de connexion PostgreSQL                                        |
+| `REDIS_URL`                                     | URL de connexion Redis (sessions, tokens, cache)                   |
+| `JWT_SECRET` / `JWT_EXPIRES_IN`                 | Secret et durée de vie de l'access token (défaut `15m`)            |
+| `JWT_REFRESH_SECRET` / `JWT_REFRESH_EXPIRES_IN` | Secret et durée de vie du refresh token (défaut `7d`)              |
+| `ENCRYPTION_KEY`                                | Clé AES-256-GCM (32 octets, base64) — chiffrement domicile/travail |
+| `CORS_ORIGIN`                                   | Origine autorisée pour le front (défaut `http://localhost:3000`)   |
 
-```bash
-# unit tests
-$ pnpm run test
+Génération de secrets : `openssl rand -base64 32`.
 
-# e2e tests
-$ pnpm run test:e2e
+## Module Auth & Users (F1)
 
-# test coverage
-$ pnpm run test:cov
-```
+Implémente l'inscription, la connexion sécurisée et le profil de mobilité
+(spec : `docs/specs/F1-auth.md`). Toutes les routes sont sous `/api/v1`.
 
-## Deployment
+| Méthode | Route                       | Auth                 | Description                                                             |
+| :------ | :-------------------------- | :------------------- | :---------------------------------------------------------------------- |
+| POST    | `/api/v1/auth/register`     | —                    | Crée un compte + profil vide, journalise le lien de vérification (dev)  |
+| POST    | `/api/v1/auth/verify-email` | —                    | Valide l'e-mail via le token reçu                                       |
+| POST    | `/api/v1/auth/login`        | —                    | Retourne `{ accessToken, refreshToken }` (échoue si e-mail non vérifié) |
+| POST    | `/api/v1/auth/refresh`      | Bearer refresh token | Émet un nouvel access token                                             |
+| POST    | `/api/v1/auth/logout`       | Bearer access token  | Révoque le refresh token courant                                        |
+| GET     | `/api/v1/users/me`          | Bearer access token  | Profil de l'utilisateur courant                                         |
+| PATCH   | `/api/v1/users/me`          | Bearer access token  | Met à jour le profil de mobilité                                        |
+| DELETE  | `/api/v1/users/me`          | Bearer access token  | Suppression de compte (RGPD, soft-delete + anonymisation)               |
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+### Points clés de sécurité (§5.7)
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+- Mots de passe hachés en **bcrypt, cost 12** ; jamais journalisés ni renvoyés.
+- **JWT access (15 min) + refresh (7 j)** signés séparément ; le refresh token
+  courant est suivi dans Redis (`auth:refresh:<userId>`) pour permettre la
+  révocation immédiate (`logout`, suppression de compte).
+- **Rate limiting** (`@nestjs/throttler`) sur `register` et `login`.
+- Messages d'erreur d'authentification **génériques** (e-mail/mot de passe
+  jamais distingués).
+- Domicile/travail chiffrés en **AES-256-GCM** au niveau applicatif (jamais en
+  clair, jamais requêtés spatialement — voir divergence documentée dans
+  `CLAUDE.md` §Modèle de données et `docs/specs/F1-auth.md` §4.3).
+- `GET/PATCH/DELETE /users/me` dérivent systématiquement l'utilisateur du JWT
+  (`request.user.sub`) — aucun paramètre de route, donc aucun accès possible
+  au profil d'un tiers par construction.
 
-```bash
-$ pnpm install -g @nestjs/mau
-$ mau deploy
-```
+### Hors périmètre F1 (voir spec §2)
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+MFA, OAuth France Connect, envoi d'e-mail réel (lien journalisé en console en
+dev) et job de purge RGPD à 30 j sont des incréments séparés, non implémentés
+ici.
 
-## Resources
+### OpenAPI
 
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+Non généré automatiquement pour cet incrément (pas de `@nestjs/swagger` dans
+les dépendances approuvées — voir `docs/specs/F1-auth.md` §8). Le tableau
+ci-dessus fait référence tant qu'une génération OpenAPI n'est pas mise en
+place.

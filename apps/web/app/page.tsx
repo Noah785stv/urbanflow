@@ -8,7 +8,7 @@ export default function Home() {
         <p className="mt-6 text-lg leading-8 text-zinc-600 dark:text-zinc-400">
           La PWA de mobilité urbaine multimodale.
         </p>
-      </main>
+      </div>
     </main>
   );
 }
