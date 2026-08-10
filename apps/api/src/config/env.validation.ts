@@ -29,4 +29,26 @@ export const envValidationSchema = Joi.object({
     }, 'longueur de clé AES-256 (32 octets)')
     .required(),
   CORS_ORIGIN: Joi.string().uri().default('http://localhost:3000'),
+
+  // Intégration transport (F3) — §9 A10 : uniquement des hôtes configurés,
+  // jamais une URL fournie par l'utilisateur.
+  NAVITIA_API_KEY: Joi.string().required(),
+  NAVITIA_BASE_URL: Joi.string().uri().default('https://api.navitia.io/v1'),
+  NAVITIA_COVERAGE: Joi.string().required(),
+  GBFS_FEED_URLS: Joi.string()
+    .custom((value: string, helpers) => {
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(value);
+      } catch {
+        return helpers.error('any.invalid');
+      }
+      const isValid =
+        Array.isArray(parsed) &&
+        parsed.every(
+          (url) => typeof url === 'string' && /^https?:\/\//.test(url),
+        );
+      return isValid ? value : helpers.error('any.invalid');
+    }, "liste JSON d'URLs GBFS valides")
+    .required(),
 });

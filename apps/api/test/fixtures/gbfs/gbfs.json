@@ -1,0 +1,16 @@
+{
+  "data": {
+    "en": {
+      "feeds": [
+        {
+          "name": "station_information",
+          "url": "https://gbfs.exemple.tld/station_information.json"
+        },
+        {
+          "name": "station_status",
+          "url": "https://gbfs.exemple.tld/station_status.json"
+        }
+      ]
+    }
+  }
+}

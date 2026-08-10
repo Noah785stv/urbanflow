@@ -97,9 +97,16 @@ A→B complet), `Segment` (portion sur un seul mode), `Mode` (moyen de transport
 ## Modèle de données (§5.3)
 
 Entités : `user`, `mobility_profile`, `trip`, `trip_segment`, `emission_factor`,
-`carbon_log`, `station`. Clés primaires en UUID. Points géographiques en
-`geography(POINT)` (PostGIS). Les `emission_factor` sont **versionnés par date**
-(`valid_from`) : une mise à jour des facteurs ADEME ne doit pas altérer l'historique.
+`carbon_log`, `station`. Clés primaires en UUID. Les `emission_factor` sont
+**versionnés par date** (`valid_from`) : une mise à jour des facteurs ADEME ne
+doit pas altérer l'historique.
+
+> ⚠️ **Précision PostGIS (divergence F1 réconciliée en F3).** `geography(POINT)`
+> (PostGIS, index GiST) équipe uniquement `station.location` (F3 — proximité
+> `ST_DWithin` sur les vélos/trottinettes partagés et arrêts de transport en
+> commun). Domicile/travail (`mobility_profile`) restent **hors PostGIS** :
+> chiffrés en AES-256-GCM au niveau applicatif, jamais requêtés spatialement
+> (privacy-by-design, cf. `docs/specs/F1-auth.md` §4.3).
 
 ## Fonctionnalités du MVP (§4)
 

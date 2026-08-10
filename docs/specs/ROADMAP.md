@@ -1,0 +1,4 @@
+- [x] F1 — Auth & profil
+- [x] F3 — Intégration transport (alimente F2 : à faire avant)
+- [ ] F2 — Planificateur (dépend de F3)
+- [ ] F4 — Calculateur carbone (dépend de F2)

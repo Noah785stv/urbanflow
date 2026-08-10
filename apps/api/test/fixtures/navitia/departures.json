@@ -1,0 +1,30 @@
+{
+  "departures": [
+    {
+      "display_informations": {
+        "physical_mode": "Bus",
+        "commercial_mode": "Bus",
+        "network": "STAR",
+        "direction": "Centre-ville",
+        "label": "C1"
+      },
+      "stop_date_time": {
+        "departure_date_time": "20260810T143000",
+        "data_freshness": "realtime"
+      }
+    },
+    {
+      "display_informations": {
+        "physical_mode": "Tramway",
+        "commercial_mode": "Tram",
+        "network": "STAR",
+        "direction": "La Poterie",
+        "label": "T1"
+      },
+      "stop_date_time": {
+        "departure_date_time": "20260810T143500",
+        "data_freshness": "base_schedule"
+      }
+    }
+  ]
+}
