@@ -43,7 +43,7 @@ const PARIS = { latitude: 48.8566, longitude: 2.3522 };
  * Parcours d'intégration F3 (§12) : proximité PostGIS réelle (ST_DWithin)
  * contre le Postgres de CI, et mode dégradé pour les prochains passages.
  * `HttpService` est mocké pour échouer systématiquement — aucun appel réseau
- * réel vers Navitia/GBFS (§12 : "aucun appel réseau réel en CI").
+ * réel vers OTP/GBFS (§12 : "aucun appel réseau réel en CI").
  */
 describe('Stations & Stops (e2e)', () => {
   let app: INestApplication;
@@ -59,6 +59,8 @@ describe('Stations & Stops (e2e)', () => {
       .overrideProvider(HttpService)
       .useValue({
         get: () =>
+          throwError(() => new Error('e2e : réseau désactivé, voir §12')),
+        post: () =>
           throwError(() => new Error('e2e : réseau désactivé, voir §12')),
       })
       .compile();
@@ -190,7 +192,7 @@ describe('Stations & Stops (e2e)', () => {
   describe('GET /stops/:id/departures', () => {
     it("mode dégradé : répond quand même si la source est injoignable, jamais d'échec global (§4.6)", async () => {
       const response = await request(httpServer)
-        .get('/api/v1/stops/stop_point:e2e/departures')
+        .get('/api/v1/stops/1:e2e/departures')
         .set('Authorization', `Bearer ${accessToken}`)
         .expect(200);
 
@@ -199,7 +201,7 @@ describe('Stations & Stops (e2e)', () => {
 
     it('sans token est rejeté (401)', async () => {
       await request(httpServer)
-        .get('/api/v1/stops/stop_point:e2e/departures')
+        .get('/api/v1/stops/1:e2e/departures')
         .expect(401);
     });
   });

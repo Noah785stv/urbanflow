@@ -16,14 +16,14 @@ const sharedMobility: SharedMobilityProvider = {
 };
 
 const transit: TransitProvider = {
-  id: 'navitia',
+  id: 'otp',
   modes: [TransportMode.Bus, TransportMode.Metro, TransportMode.Tram],
   isAvailable: () => Promise.resolve(true),
   getDepartures: () => Promise.resolve([]),
 };
 
 const routing: RoutingProvider = {
-  id: 'navitia',
+  id: 'otp',
   modes: [
     TransportMode.Bus,
     TransportMode.Metro,

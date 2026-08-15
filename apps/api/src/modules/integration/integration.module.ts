@@ -6,7 +6,7 @@ import { CacheModule } from '../../common/cache/cache.module';
 import { Station } from './entities/station.entity';
 import { GbfsSyncScheduler } from './providers/gbfs/gbfs-sync.scheduler';
 import { GbfsProvider } from './providers/gbfs/gbfs.provider';
-import { NavitiaProvider } from './providers/navitia/navitia.provider';
+import { OtpProvider } from './providers/otp/otp.provider';
 import { ProviderRegistry } from './providers/provider-registry.service';
 import { TRANSPORT_PROVIDERS } from './providers/provider.tokens';
 import { StationsController } from './stations.controller';
@@ -16,9 +16,11 @@ import { StopsService } from './stops.service';
 
 /**
  * Module Integration (§5.1) — SEUL point de contact avec les APIs de
- * transport externes (Navitia, GBFS). Ajouter un opérateur = implémenter
- * l'interface `TransportProvider` adéquate et l'ajouter à la factory
- * `TRANSPORT_PROVIDERS` ci-dessous, sans toucher au reste du module (§5).
+ * transport externes (OpenTripPlanner, GBFS — ADR-005). Ajouter un opérateur
+ * = implémenter l'interface `TransportProvider` adéquate et l'ajouter à la
+ * factory `TRANSPORT_PROVIDERS` ci-dessous, sans toucher au reste du module
+ * (§5). `ProviderRegistry` est exporté pour être consommé par F2
+ * (TripPlannerService).
  */
 @Module({
   imports: [
@@ -30,19 +32,17 @@ import { StopsService } from './stops.service';
   controllers: [StationsController, StopsController],
   providers: [
     GbfsProvider,
-    NavitiaProvider,
+    OtpProvider,
     GbfsSyncScheduler,
     ProviderRegistry,
     StationsService,
     StopsService,
     {
       provide: TRANSPORT_PROVIDERS,
-      useFactory: (gbfs: GbfsProvider, navitia: NavitiaProvider) => [
-        gbfs,
-        navitia,
-      ],
-      inject: [GbfsProvider, NavitiaProvider],
+      useFactory: (gbfs: GbfsProvider, otp: OtpProvider) => [gbfs, otp],
+      inject: [GbfsProvider, OtpProvider],
     },
   ],
+  exports: [ProviderRegistry],
 })
 export class IntegrationModule {}
