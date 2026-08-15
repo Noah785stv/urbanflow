@@ -3,7 +3,14 @@
 > Spécification d'implémentation. À lire avec `CLAUDE.md` (stack, conventions,
 > Definition of Done), qui reste la source de vérité opérationnelle.
 > Références dossier : §4.6 (F3), §5.4 (abstraction `TransportProvider`),
-> §5.3 (modèle de données), §2.5 (Arbitrage 5 : Navitia), §6.1.1 (tests via mocks).
+> §5.3 (modèle de données), §2.5 (Arbitrage 5 : Navitia — **superseded**),
+> §6.1.1 (tests via mocks).
+>
+> ⚠️ **Divergence signalée (règle de travail n°2)** : l'Arbitrage 5 du dossier
+> retenait Navitia, dont l'accès gratuit est désormais fermé. Le provider de
+> routing/départs est OpenTripPlanner (OTP), auto-hébergé via Docker — voir
+> `docs/adr/ADR-005-routing-opentripplanner.md` pour le contexte complet de
+> la décision et ses conséquences.
 
 ## 1. Objectif
 
@@ -20,8 +27,8 @@ connaisse les APIs sous-jacentes.
 - Abstraction `TransportProvider` (interfaces ségréguées) + registre de providers.
 - Provider **GBFS** : inventaire des stations vélos/trottinettes (statique →
   PostGIS) + disponibilités temps réel (→ Redis).
-- Provider **Navitia** : prochains passages à un arrêt + méthode de routing
-  (`getJourneys`) réutilisée par F2.
+- Provider **OpenTripPlanner (OTP)**, auto-hébergé : prochains passages à un
+  arrêt + méthode de routing (`getJourneys`) réutilisée par F2 (ADR-005).
 - Recherche de stations **à proximité** via PostGIS (`ST_DWithin`).
 - Cache Redis avec TTL par type de donnée + **mode dégradé** (tolérance aux pannes).
 - Endpoints exposant stations à proximité et prochains passages.
@@ -55,7 +62,7 @@ choix TypeORM+PostGIS, ADR-004).
 | :---------------------- | :---------------------- | :---------------------------------------------- |
 | id                      | uuid                    | PK                                              |
 | tenant_id               | uuid                    | non nul                                         |
-| provider                | varchar                 | ex. `gbfs:velostar`, `navitia`                  |
+| provider                | varchar                 | ex. `gbfs:velostar`, `otp`                      |
 | external_id             | varchar                 | identifiant de la station chez la source        |
 | name                    | varchar                 | non nul                                         |
 | station_type            | enum                    | `bike` \| `scooter` \| `dock` \| `transit_stop` |
@@ -94,15 +101,17 @@ partagés avec le front et F2.
 
 ## 6. Sources & standards
 
-| Source                     | Standard             | Rôle dans F3                        |
-| :------------------------- | :------------------- | :---------------------------------- |
-| Navitia (`api.navitia.io`) | agrège GTFS national | prochains passages + routing (F2)   |
-| Feeds GBFS opérateurs      | GBFS                 | stations + dispo vélos/trottinettes |
-| Flux opérateur temps réel  | GTFS-RT              | passages temps réel (phasé)         |
+| Source                          | Standard                 | Rôle dans F3                        |
+| :------------------------------ | :------------------------ | :---------------------------------- |
+| OpenTripPlanner (auto-hébergé)  | ingère GTFS (STAR) + OSM | prochains passages + routing (F2)   |
+| Feeds GBFS opérateurs           | GBFS                     | stations + dispo vélos/trottinettes |
+| Flux opérateur temps réel       | GTFS-RT                  | passages temps réel (phasé)         |
 
-> Consulter la **documentation Navitia et la spec GBFS à jour** au moment de
-> l'implémentation (formats de requête/réponse, région de couverture). Vérifier que
-> la couverture Navitia inclut bien le territoire de référence (réseau STAR).
+> Schéma GraphQL vérifié par introspection live contre l'instance OTP
+> (`/otp/gtfs/v1`) : le point d'entrée réel de calcul d'itinéraire est
+> `planConnection` (Relay-style), pas `plan` (absent de ce schéma). Voir
+> `apps/api/src/modules/integration/providers/otp/otp.types.ts` pour les
+> formes de réponse retenues.
 
 ## 7. Cache & mode dégradé (C10, §2.6)
 
@@ -131,9 +140,9 @@ réponses indiquent la fraîcheur des données (`stale`, `updatedAt`).
 
 | Réf                 | Mesure dans F3                                                                                                                       |
 | :------------------ | :----------------------------------------------------------------------------------------------------------------------------------- |
-| A10 SSRF (§5.7)     | Appels sortants **uniquement** vers les hôtes en liste blanche (Navitia + feeds configurés) ; aucune URL contrôlée par l'utilisateur |
+| A10 SSRF (§5.7)     | Appels sortants **uniquement** vers les hôtes en liste blanche (OTP + feeds configurés) ; aucune URL contrôlée par l'utilisateur     |
 | A01 (§5.7)          | Endpoints protégés par `JwtAuthGuard` (réutilise F1)                                                                                 |
-| Secrets             | Clé API Navitia et URLs de feeds via variables d'environnement, jamais en dur                                                        |
+| Secrets             | `OTP_BASE_URL` et URLs de feeds via variables d'environnement, jamais en dur (OTP auto-hébergé : aucune clé API à protéger)          |
 | C9 Interopérabilité | Respect strict de GTFS/GBFS ; abstraction prête pour NeTEx/SIRI                                                                      |
 | C10 Performances    | Cache Redis, mode dégradé, requêtes spatiales indexées (GiST)                                                                        |
 
@@ -150,9 +159,7 @@ Pour la phase GTFS-RT : `gtfs-realtime-bindings` (+ `protobufjs`).
 **Variables d'environnement** (dans `.env`, `.env.example`, `env.validation.ts`) :
 
 ```
-NAVITIA_API_KEY=...
-NAVITIA_BASE_URL=https://api.navitia.io/v1
-NAVITIA_COVERAGE=...            # région de couverture (à confirmer dans la doc)
+OTP_BASE_URL=http://127.0.0.1:8081   # instance OpenTripPlanner auto-hébergée (Docker)
 GBFS_FEED_URLS=...              # JSON ou liste : URL d'auto-découverte gbfs.json par opérateur
 GTFS_RT_FEED_URL=...            # (phase GTFS-RT)
 ```
@@ -172,8 +179,8 @@ GTFS_RT_FEED_URL=...            # (phase GTFS-RT)
 
 - **Aucun appel réseau réel en CI.** Les APIs externes sont simulées par des
   **fixtures versionnées** (échantillons GBFS `station_information` /
-  `station_status`, réponse Navitia, trame GTFS-RT décodée). Le `HttpService` est
-  mocké.
+  `station_status`, réponses GraphQL OTP capturées par introspection live contre
+  l'instance auto-hébergée, trame GTFS-RT décodée). Le `HttpService` est mocké.
 - **Unitaires** : chaque provider (parsing des fixtures → types normalisés), le
   wrapper de cache (hit/miss/TTL), le **mode dégradé** (provider en échec → service
   de la valeur `stale` / réponse vide signalée).
@@ -192,7 +199,8 @@ GTFS_RT_FEED_URL=...            # (phase GTFS-RT)
 5. Wrapper cache Redis + mode dégradé (générique, réutilisable par tout provider).
 6. `GbfsProvider` : `syncStations` (→ PostGIS) + `getStationStatus` (→ Redis).
 7. Sync périodique des stations (`@nestjs/schedule`).
-8. `NavitiaProvider` : `getDepartures` + `getJourneys` (routing pour F2).
+8. `OtpProvider` : `getDepartures` + `getJourneys` (routing pour F2), contre
+   l'API GraphQL GTFS d'OpenTripPlanner (ADR-005).
 9. Endpoints `stations/nearby` (PostGIS + statut) et `stops/:id/departures`.
 10. (Phase) `GtfsRtProvider` via `gtfs-realtime-bindings`.
 11. Tests avec fixtures + proximité PostGIS + mode dégradé.
@@ -204,9 +212,13 @@ GTFS_RT_FEED_URL=...            # (phase GTFS-RT)
   spatiale (extension, type `geography`, index GiST, `ST_DWithin`) et, si besoin,
   mettre à jour le §5.3 du dossier pour refléter que les points géospatiaux
   concernent les stations/trajets (et non plus domicile/travail, chiffrés en F1).
-- **Clé API Navitia requise** : à obtenir sur navitia.io ; en CI elle n'est pas
-  utilisée (tout est mocké).
+- **Navitia abandonné en cours d'implémentation** (accès gratuit fermé) au profit
+  d'OpenTripPlanner auto-hébergé via Docker — décision documentée dans
+  `docs/adr/ADR-005-routing-opentripplanner.md`. En local, le conteneur OTP est
+  mappé sur le port hôte **8081** (8080 étant occupé par un PostgreSQL natif
+  Windows/EnterpriseDB sur la machine de développement) ; en CI, `OTP_BASE_URL`
+  garde sa valeur par défaut et n'est jamais appelé (tout est mocké).
 - **GTFS-RT (protobuf)** est la partie la plus délicate : la traiter en second, une
-  fois GBFS + Navitia stabilisés.
+  fois GBFS + OTP stabilisés.
 - Toute contrainte rendant une règle infaisable → la signaler et synchroniser cette
   spec + le dossier (règle de travail n°2).

@@ -49,9 +49,7 @@ Définies et validées (Joi, fail-fast au démarrage) dans `src/config/env.valid
 | `JWT_REFRESH_SECRET` / `JWT_REFRESH_EXPIRES_IN` | Secret et durée de vie du refresh token (défaut `7d`)               |
 | `ENCRYPTION_KEY`                                | Clé AES-256-GCM (32 octets, base64) — chiffrement domicile/travail  |
 | `CORS_ORIGIN`                                   | Origine autorisée pour le front (défaut `http://localhost:3000`)    |
-| `NAVITIA_API_KEY`                               | Clé API navitia.io                                                  |
-| `NAVITIA_BASE_URL`                              | URL de base Navitia (défaut `https://api.navitia.io/v1`)            |
-| `NAVITIA_COVERAGE`                              | Région de couverture Navitia — **à confirmer contre la doc à jour** |
+| `OTP_BASE_URL`                                  | URL de l'instance OpenTripPlanner auto-hébergée (défaut `http://127.0.0.1:8081`, voir ADR-005) |
 | `GBFS_FEED_URLS`                                | Liste JSON des URLs d'auto-découverte `gbfs.json` par opérateur     |
 
 Génération de secrets : `openssl rand -base64 32`.
@@ -96,9 +94,14 @@ ici.
 
 ## Module Integration & Transport (F3)
 
-Abstraction `TransportProvider` (GBFS, Navitia) derrière un `ProviderRegistry`
-(spec : `docs/specs/F3-integration.md`). C'est le **seul** point de contact
-avec les APIs de transport externes.
+Abstraction `TransportProvider` (GBFS, OpenTripPlanner) derrière un
+`ProviderRegistry` (spec : `docs/specs/F3-integration.md`). C'est le **seul**
+point de contact avec les APIs de transport externes.
+
+> Navitia (retenu initialement) a un accès gratuit fermé ; le routing et les
+> prochains passages reposent depuis sur une instance OpenTripPlanner
+> auto-hébergée via Docker (réseau STAR + OSM Bretagne) — voir
+> `docs/adr/ADR-005-routing-opentripplanner.md`.
 
 | Méthode | Route                          | Auth                | Description                                                                                      |
 | :------ | :----------------------------- | :------------------ | :----------------------------------------------------------------------------------------------- |
@@ -124,24 +127,23 @@ avec les APIs de transport externes.
   l'inventaire des stations GBFS (`station_information`, PostGIS) — les
   disponibilités temps réel sont rafraîchies à la demande, pas par le
   scheduler.
-- **Liste blanche SSRF (A10)** : seuls `NAVITIA_BASE_URL` et les hôtes dérivés
-  de `GBFS_FEED_URLS` sont appelés ; les sous-flux découverts via `gbfs.json`
+- **Liste blanche SSRF (A10)** : seuls `OTP_BASE_URL` et les hôtes dérivés de
+  `GBFS_FEED_URLS` sont appelés ; les sous-flux découverts via `gbfs.json`
   sont vérifiés contre l'hôte de découverte configuré.
 
 ### Hors périmètre F3 (voir spec §2, §14)
 
 GTFS-RT (positions temps réel via protobuf) est reporté — traité en second
-temps une fois GBFS et Navitia stabilisés. L'endpoint planificateur
-(comparaison de plusieurs itinéraires) appartient à F2 ; F3 fournit
-uniquement `RoutingProvider.getJourneys` comme brique brute, sans endpoint
-dédié.
+temps une fois GBFS et OTP stabilisés. L'endpoint planificateur (comparaison
+de plusieurs itinéraires) appartient à F2 ; F3 fournit uniquement
+`RoutingProvider.getJourneys` comme brique brute, sans endpoint dédié.
 
 **Simplification assumée** : les stations GBFS sont toutes typées
 `StationType.Dock` (GBFS ne distingue le véhicule qu'au niveau de
 `vehicle_types.json`, hors périmètre de ce premier incrément). Le mapping des
-modes Navitia (`NAVITIA_MODE_MAP`) et le calcul de distance par tronçon
-d'itinéraire (`distanceMeters`) sont des approximations à affiner avec un
-échantillon réel de réponse Navitia (F2).
+modes OTP (`OTP_MODE_MAP`) est une approximation limitée aux modes présents
+sur le réseau STAR ; tout mode non couvert (avion, ferry, taxi...) retombe
+sur `Bus`, avec un avertissement journalisé.
 
 ### OpenAPI
 

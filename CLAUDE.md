@@ -38,8 +38,16 @@ Projet de certification **Titre 6 CDSD (RNCP 36146)**, session septembre 2026.
 | Cache           | Redis (cache + sessions)                             |
 | ORM             | TypeORM (intégration NestJS, types spatiaux PostGIS) |
 | Cartographie    | Leaflet + OpenStreetMap                              |
-| Routing         | API Navitia                                          |
+| Routing         | OpenTripPlanner (OTP), auto-hébergé via Docker       |
 | Langage         | TypeScript de bout en bout (strict)                  |
+
+> ⚠️ **Divergence signalée (F3) : Navitia → OpenTripPlanner.** Le dossier de
+> référence (§2.5, Arbitrage 5) retenait Navitia ; son accès gratuit est
+> désormais fermé (API payante uniquement). Remplacé par OpenTripPlanner
+> (OTP) 2.x auto-hébergé via Docker, alimenté par le GTFS du réseau STAR et
+> un extrait OSM Bretagne — déjà documenté comme solution de repli dans le
+> dossier. Décision, alternatives et conséquences dans
+> `docs/adr/ADR-005-routing-opentripplanner.md`.
 
 ## Structure du monorepo (pnpm workspaces)
 
@@ -86,7 +94,7 @@ A→B complet), `Segment` (portion sur un seul mode), `Mode` (moyen de transport
   rester extractible en microservice sans refonte (principe _MonolithFirst_).
 - **Séparation des couches** : chaque couche ne connaît que la couche inférieure.
 - **Abstraction `TransportProvider`** : le module Integration est le SEUL point de
-  contact avec les APIs externes (Navitia, GTFS-RT, GBFS). Ajouter un opérateur =
+  contact avec les APIs externes (OpenTripPlanner, GTFS-RT, GBFS). Ajouter un opérateur =
   implémenter l'interface, sans toucher au cœur.
 - **Versioning d'API** : toutes les routes sous `/api/v1/`.
 - **Multi-tenancy logique** : colonne `tenant_id` présente dès le MVP.
@@ -112,7 +120,7 @@ doit pas altérer l'historique.
 
 - **F1** — Inscription, connexion, profil mobilité (RGPD, suppression sous 30 j).
 - **F2** — Planificateur multimodal géolocalisé (≥ 3 options, temps réel, < 3 s).
-- **F3** — Intégration APIs transport (Navitia + GBFS + GTFS-RT, cache, mode dégradé).
+- **F3** — Intégration APIs transport (OpenTripPlanner + GBFS + GTFS-RT, cache, mode dégradé).
 - **F4** — Calculateur d'empreinte carbone (fonctionnalité CLÉ) : `émissions(Trip)
 = Σ [ distance(Segment) × facteur(Mode) ]`, tableau de bord, export PDF.
 
