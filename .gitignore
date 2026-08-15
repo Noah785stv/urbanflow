@@ -21,3 +21,8 @@ coverage/
 .DS_Store
 .idea/
 *.tsbuildinfo
+
+# Données OpenTripPlanner (téléchargées / générées)
+infra/otp/data/*.pbf
+infra/otp/data/*.zip
+infra/otp/data/graph.obj

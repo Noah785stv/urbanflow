@@ -30,6 +30,17 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+  otp:
+    image: docker.io/opentripplanner/opentripplanner:latest
+    container_name: urbanflow-otp
+    command: ['--load', '--serve']
+    environment:
+      JAVA_TOOL_OPTIONS: '-Xmx4g'
+    ports:
+      - '8081:8080'
+    volumes:
+      - ./infra/otp/data:/var/opentripplanner
+    restart: unless-stopped
 
 volumes:
   postgres_data:

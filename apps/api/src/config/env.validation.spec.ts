@@ -4,7 +4,7 @@ interface ValidatedEnv {
   NODE_ENV: string;
   JWT_EXPIRES_IN: string;
   JWT_REFRESH_EXPIRES_IN: string;
-  NAVITIA_BASE_URL: string;
+  OTP_BASE_URL: string;
 }
 
 function validEnv(
@@ -16,8 +16,6 @@ function validEnv(
     JWT_SECRET: 'a-secret-of-16-chars-or-more',
     JWT_REFRESH_SECRET: 'another-secret-of-16-chars-or-more',
     ENCRYPTION_KEY: Buffer.alloc(32, 1).toString('base64'),
-    NAVITIA_API_KEY: 'a-navitia-key',
-    NAVITIA_COVERAGE: 'fr-idf',
     GBFS_FEED_URLS: '["https://exemple.tld/gbfs.json"]',
     ...overrides,
   };
@@ -32,7 +30,7 @@ describe('envValidationSchema', () => {
     expect(value.NODE_ENV).toBe('development');
     expect(value.JWT_EXPIRES_IN).toBe('15m');
     expect(value.JWT_REFRESH_EXPIRES_IN).toBe('7d');
-    expect(value.NAVITIA_BASE_URL).toBe('https://api.navitia.io/v1');
+    expect(value.OTP_BASE_URL).toBe('http://127.0.0.1:8081');
   });
 
   it('rejette une ENCRYPTION_KEY qui ne fait pas 32 octets une fois décodée', () => {
@@ -85,11 +83,10 @@ describe('envValidationSchema', () => {
     expect(error).toBeDefined();
   });
 
-  it('rejette une NAVITIA_COVERAGE absente', () => {
-    const env = validEnv();
-    delete env.NAVITIA_COVERAGE;
-
-    const { error } = envValidationSchema.validate(env);
+  it('rejette une OTP_BASE_URL qui n’est pas une URI', () => {
+    const { error } = envValidationSchema.validate(
+      validEnv({ OTP_BASE_URL: 'pas-une-uri' }),
+    );
 
     expect(error).toBeDefined();
   });

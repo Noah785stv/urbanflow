@@ -1,0 +1,26 @@
+{
+  "data": {
+    "stop": {
+      "stoptimesWithoutPatterns": [
+        {
+          "scheduledDeparture": 30000,
+          "realtimeDeparture": 30000,
+          "realtime": false,
+          "realtimeState": "SCHEDULED",
+          "serviceDay": 1786744800,
+          "headsign": "Henri Fréville",
+          "trip": { "route": { "shortName": "C3", "mode": "BUS" } }
+        },
+        {
+          "scheduledDeparture": 30240,
+          "realtimeDeparture": 30240,
+          "realtime": false,
+          "realtimeState": "SCHEDULED",
+          "serviceDay": 1786744800,
+          "headsign": "La Poterie",
+          "trip": { "route": { "shortName": "12", "mode": "BUS" } }
+        }
+      ]
+    }
+  }
+}

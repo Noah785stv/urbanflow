@@ -1,0 +1,20 @@
+{
+  "data": {
+    "planConnection": {
+      "edges": [
+        {
+          "node": {
+            "start": "2026-08-17T08:04:45+02:00",
+            "end": "2026-08-17T08:26:08+02:00",
+            "duration": 1283,
+            "legs": [
+              { "mode": "WALK", "duration": 75, "distance": 78.61 },
+              { "mode": "BUS", "duration": 930, "distance": 5357.0 },
+              { "mode": "WALK", "duration": 278, "distance": 350.43 }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

@@ -22,7 +22,7 @@ interface CacheEnvelope<T> {
 
 /**
  * Wrapper cache Redis générique avec mode dégradé (§7, C10). Chaque appel à
- * une source externe (GBFS, Navitia) passe par `getOrRefresh` :
+ * une source externe (GBFS, OTP) passe par `getOrRefresh` :
  * - donnée fraîche en cache → servie telle quelle ;
  * - donnée absente ou périmée → tentative de rafraîchissement ; en cas
  *   d'échec, on sert la dernière valeur connue marquée `stale: true` ; à
