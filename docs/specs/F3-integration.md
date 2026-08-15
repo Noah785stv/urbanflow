@@ -101,11 +101,11 @@ partagés avec le front et F2.
 
 ## 6. Sources & standards
 
-| Source                          | Standard                 | Rôle dans F3                        |
-| :------------------------------ | :------------------------ | :---------------------------------- |
-| OpenTripPlanner (auto-hébergé)  | ingère GTFS (STAR) + OSM | prochains passages + routing (F2)   |
-| Feeds GBFS opérateurs           | GBFS                     | stations + dispo vélos/trottinettes |
-| Flux opérateur temps réel       | GTFS-RT                  | passages temps réel (phasé)         |
+| Source                         | Standard                 | Rôle dans F3                        |
+| :----------------------------- | :----------------------- | :---------------------------------- |
+| OpenTripPlanner (auto-hébergé) | ingère GTFS (STAR) + OSM | prochains passages + routing (F2)   |
+| Feeds GBFS opérateurs          | GBFS                     | stations + dispo vélos/trottinettes |
+| Flux opérateur temps réel      | GTFS-RT                  | passages temps réel (phasé)         |
 
 > Schéma GraphQL vérifié par introspection live contre l'instance OTP
 > (`/otp/gtfs/v1`) : le point d'entrée réel de calcul d'itinéraire est
@@ -138,13 +138,13 @@ réponses indiquent la fraîcheur des données (`stale`, `updatedAt`).
 
 ## 9. Sécurité & contraintes
 
-| Réf                 | Mesure dans F3                                                                                                                       |
-| :------------------ | :----------------------------------------------------------------------------------------------------------------------------------- |
-| A10 SSRF (§5.7)     | Appels sortants **uniquement** vers les hôtes en liste blanche (OTP + feeds configurés) ; aucune URL contrôlée par l'utilisateur     |
-| A01 (§5.7)          | Endpoints protégés par `JwtAuthGuard` (réutilise F1)                                                                                 |
-| Secrets             | `OTP_BASE_URL` et URLs de feeds via variables d'environnement, jamais en dur (OTP auto-hébergé : aucune clé API à protéger)          |
-| C9 Interopérabilité | Respect strict de GTFS/GBFS ; abstraction prête pour NeTEx/SIRI                                                                      |
-| C10 Performances    | Cache Redis, mode dégradé, requêtes spatiales indexées (GiST)                                                                        |
+| Réf                 | Mesure dans F3                                                                                                                   |
+| :------------------ | :------------------------------------------------------------------------------------------------------------------------------- |
+| A10 SSRF (§5.7)     | Appels sortants **uniquement** vers les hôtes en liste blanche (OTP + feeds configurés) ; aucune URL contrôlée par l'utilisateur |
+| A01 (§5.7)          | Endpoints protégés par `JwtAuthGuard` (réutilise F1)                                                                             |
+| Secrets             | `OTP_BASE_URL` et URLs de feeds via variables d'environnement, jamais en dur (OTP auto-hébergé : aucune clé API à protéger)      |
+| C9 Interopérabilité | Respect strict de GTFS/GBFS ; abstraction prête pour NeTEx/SIRI                                                                  |
+| C10 Performances    | Cache Redis, mode dégradé, requêtes spatiales indexées (GiST)                                                                    |
 
 ## 10. Configuration & dépendances
 

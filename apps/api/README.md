@@ -39,18 +39,18 @@ pnpm start:dev             # démarre l'API en mode watch — http://localhost:3
 
 Définies et validées (Joi, fail-fast au démarrage) dans `src/config/env.validation.ts`.
 
-| Variable                                        | Description                                                         |
-| :---------------------------------------------- | :------------------------------------------------------------------ |
-| `NODE_ENV`                                      | `development` \| `test` \| `production`                             |
-| `API_PORT`                                      | Port HTTP de l'API (défaut `3001`)                                  |
-| `DATABASE_URL`                                  | URL de connexion PostgreSQL                                         |
-| `REDIS_URL`                                     | URL de connexion Redis (sessions, tokens, cache)                    |
-| `JWT_SECRET` / `JWT_EXPIRES_IN`                 | Secret et durée de vie de l'access token (défaut `15m`)             |
-| `JWT_REFRESH_SECRET` / `JWT_REFRESH_EXPIRES_IN` | Secret et durée de vie du refresh token (défaut `7d`)               |
-| `ENCRYPTION_KEY`                                | Clé AES-256-GCM (32 octets, base64) — chiffrement domicile/travail  |
-| `CORS_ORIGIN`                                   | Origine autorisée pour le front (défaut `http://localhost:3000`)    |
+| Variable                                        | Description                                                                                    |
+| :---------------------------------------------- | :--------------------------------------------------------------------------------------------- |
+| `NODE_ENV`                                      | `development` \| `test` \| `production`                                                        |
+| `API_PORT`                                      | Port HTTP de l'API (défaut `3001`)                                                             |
+| `DATABASE_URL`                                  | URL de connexion PostgreSQL                                                                    |
+| `REDIS_URL`                                     | URL de connexion Redis (sessions, tokens, cache)                                               |
+| `JWT_SECRET` / `JWT_EXPIRES_IN`                 | Secret et durée de vie de l'access token (défaut `15m`)                                        |
+| `JWT_REFRESH_SECRET` / `JWT_REFRESH_EXPIRES_IN` | Secret et durée de vie du refresh token (défaut `7d`)                                          |
+| `ENCRYPTION_KEY`                                | Clé AES-256-GCM (32 octets, base64) — chiffrement domicile/travail                             |
+| `CORS_ORIGIN`                                   | Origine autorisée pour le front (défaut `http://localhost:3000`)                               |
 | `OTP_BASE_URL`                                  | URL de l'instance OpenTripPlanner auto-hébergée (défaut `http://127.0.0.1:8081`, voir ADR-005) |
-| `GBFS_FEED_URLS`                                | Liste JSON des URLs d'auto-découverte `gbfs.json` par opérateur     |
+| `GBFS_FEED_URLS`                                | Liste JSON des URLs d'auto-découverte `gbfs.json` par opérateur                                |
 
 Génération de secrets : `openssl rand -base64 32`.
 
