@@ -79,9 +79,8 @@ jobs:
           JWT_SECRET: ci-only-jwt-secret-not-a-real-value
           JWT_REFRESH_SECRET: ci-only-refresh-secret-not-a-real-value
           ENCRYPTION_KEY: 4DUTb14VQ7ZTw3A4Kvux6xkkyGuNzXq1nO60U8p2dWc=
-          NAVITIA_API_KEY: ci-only-navitia-key-not-a-real-value
-          NAVITIA_COVERAGE: ci-only-coverage
           GBFS_FEED_URLS: '[]'
+          OTP_BASE_URL: http://127.0.0.1:8081
 
       - name: Build
         run: pnpm build
