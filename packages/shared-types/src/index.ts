@@ -121,3 +121,28 @@ export interface JourneyOption {
   durationSeconds: number;
   sections: JourneySection[];
 }
+
+/** Étiquette de classement d'un itinéraire planifié (F2, §5.1). */
+export type JourneyLabel = 'fastest' | 'greenest' | 'cheapest';
+
+/**
+ * `JourneyOption` enrichi par F2 (empreinte carbone, coût indicatif, étiquettes).
+ * `estimatedCostCents` vaut `null` quand un mode du trajet n'est pas estimable
+ * (§5.3) — l'option n'est alors pas éligible au label `cheapest`.
+ */
+export interface PlannedJourney extends JourneyOption {
+  co2Grams: number;
+  estimatedCostCents: number | null;
+  labels: JourneyLabel[];
+}
+
+/** Corps de la requête `POST /trips/plan` (F2, §4). */
+export interface PlanTripRequest {
+  from: Coordinates;
+  to: Coordinates;
+  /** ISO 8601 ; défaut = maintenant. */
+  departureAt?: string;
+  excludeModes?: TransportMode[];
+  /** Contrainte PMR (§5.5) — accueillie par l'API ; non encore appliquée au tri (voir F2-planner.md §12). */
+  accessibleOnly?: boolean;
+}

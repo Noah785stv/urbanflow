@@ -151,3 +151,43 @@ Non généré automatiquement pour cet incrément (pas de `@nestjs/swagger` dans
 les dépendances approuvées — voir `docs/specs/F1-auth.md` §8). Les tableaux
 ci-dessus font référence tant qu'une génération OpenAPI n'est pas mise en
 place.
+
+## Module Trip — Planificateur multimodal (F2)
+
+Orchestration `RoutingProvider.getJourneys` (F3) → enrichissement carbone/coût
+→ filtres → classement (spec : `docs/specs/F2-planner.md`).
+
+| Méthode | Route                | Auth                | Description                                                                        |
+| :------ | :------------------- | :------------------ | :--------------------------------------------------------------------------------- |
+| POST    | `/api/v1/trips/plan` | Bearer access token | Corps `PlanTripRequest` → ≥ 3 `PlannedJourney` étiquetés (CO₂, coût, mode dégradé) |
+
+### Points clés (§5)
+
+- **`CarbonEstimatorService`** (module `carbon`, testé à 100 %) :
+  `co2Grams = Σ (distanceMeters / 1000 × facteur ADEME)`, facteurs injectés via
+  le token `EMISSION_FACTORS` — F4 pourra les rendre versionnés en base sans
+  changer le service.
+- **`FareEstimator`** (module `trip`) : barème indicatif (`fare.constants.ts`,
+  token `FARE_CONFIG`) — ticket TC unique par trajet, trottinette au
+  déblocage + à la minute, voiture solo au kilomètre, marche/vélo gratuits.
+  Coût non estimable (mode hors barème) → `estimatedCostCents: null`, option
+  inéligible au label `cheapest`.
+- **Classement** : `fastest` (durée min), `greenest` (CO₂ min), `cheapest`
+  (coût min parmi les options estimables) — un itinéraire peut cumuler
+  plusieurs labels en cas d'égalité.
+- **Cache + mode dégradé** (`DegradedCacheService`, réutilisé de F3) : clé
+  dérivée de l'origine/destination/`departureAt` arrondi à 5 min/filtres ;
+  `getJourneys` n'est pas caché côté F3, c'est `TripPlannerService` qui
+  applique le cache ici. Panne du `RoutingProvider` → dernier plan connu
+  (`stale: true`) ou réponse vide signalée, jamais de 500.
+- **`excludeModes`** exclut tout itinéraire portant au moins une section dans
+  la liste. **`accessibleOnly`** est accueilli par l'API mais pas encore
+  appliqué au tri — `OtpProvider` n'expose pas encore de donnée
+  d'accessibilité PMR par section (voir `docs/specs/F2-planner.md` §12).
+
+### Hors périmètre F2 (voir spec §2, §12)
+
+Le volet frontend (formulaire, carte Leaflet, géolocalisation navigateur)
+ouvrira un chantier dédié quand `apps/web` sera développé. La persistance du
+trajet (`trip`, `trip_segment`) et l'historique carbone (`carbon_log`)
+appartiennent à F4 — F2 est un calcul à la volée, sans écriture en base.
