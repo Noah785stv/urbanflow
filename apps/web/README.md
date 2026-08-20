@@ -1,36 +1,83 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# @urbanflow/web
 
-## Getting Started
+Frontend PWA d'UrbanFlow Mobility — Next.js App Router (voir `CLAUDE.md` à la
+racine du monorepo pour la stack, les conventions et la Definition of Done).
 
-First, run the development server:
+## Prérequis
+
+- Node.js ≥ 20, pnpm ≥ 9
+- `apps/api` démarré (voir `apps/api/README.md`) pour un usage réel ; les
+  tests (unitaires, e2e, a11y) n'en ont pas besoin, tout est mocké.
+
+## Mise en route
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# à la racine du monorepo
+pnpm install
+cp apps/web/.env.example apps/web/.env.local   # NEXT_PUBLIC_API_URL
+
+pnpm --filter web dev   # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Commandes
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Commande                      | Description                                               |
+| :---------------------------- | :-------------------------------------------------------- |
+| `pnpm --filter web dev`       | Serveur de dev (webpack — voir note Turbopack ci-dessous) |
+| `pnpm --filter web build`     | Build de production (génère aussi le service worker)      |
+| `pnpm --filter web start`     | Sert le build de production                               |
+| `pnpm --filter web lint`      | ESLint (flat config, corrige automatiquement)             |
+| `pnpm --filter web typecheck` | Vérification TypeScript stricte, sans émission            |
+| `pnpm --filter web test`      | Tests de composants (Vitest + Testing Library)            |
+| `pnpm --filter web test:e2e`  | E2E + accessibilité (Playwright, axe-core) — API mockée   |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Module Planificateur (F2, première tranche verticale)
 
-## Learn More
+Spec : `docs/specs/F2-web-planner.md`. Parcours : **se connecter → saisir un
+trajet → voir les 3 itinéraires classés avec leur CO₂ sur une carte**.
 
-To learn more about Next.js, take a look at the following resources:
+- `/login`, `/register` : authentification (F1). L'inscription inclut une
+  étape de vérification par token collé manuellement — F1 n'envoie pas
+  d'e-mail réel, le lien est journalisé côté API en dev.
+- `/` (protégée) : carte Leaflet/OSM (marqueurs, pas de tracé — voir
+  divergence de contrat ci-dessous), origine par géolocalisation ou clic
+  carte, saisie clavier des coordonnées, `POST /trips/plan`, 3 options
+  classées (`fastest`/`greenest`/`cheapest`).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Points clés
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **Jetons en mémoire uniquement** (`lib/token-store.ts`), jamais persistés.
+  Conséquence assumée (§9) : un rechargement de page déconnecte l'utilisateur.
+  Le durcissement (cookies httpOnly) est un incrément ultérieur.
+- **`POST /auth/refresh`** attend le refresh token en `Authorization: Bearer`
+  (comme l'access token) — vérifié dans `apps/api` avant d'écrire le client,
+  pas deviné.
+- **Hors-ligne (§10, C1)** : le service worker (Serwist) met en cache l'app
+  shell ; la dernière réponse de `POST /trips/plan` (non cachable côté SW —
+  Cache API ne gère que les GET) est mémorisée dans `localStorage`
+  (`lib/last-plan-cache.ts`) et resservie si le réseau échoue.
+- **Accessibilité (§11, C7)** : navigation clavier complète (y compris pour
+  poser origine/destination — champs lat/lng en plus du clic carte), focus
+  visible, contrastes AA, région live pour l'annonce des résultats. Vérifié
+  par `axe-core` (0 violation critical/serious) sur `/login`, `/register` et
+  le planificateur.
 
-## Deploy on Vercel
+### Divergence de contrat signalée (§3)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+`PlannedJourney.sections` ne porte aucune géométrie de tronçon : impossible
+de tracer l'itinéraire réel sur la carte. Cette tranche affiche des
+marqueurs origine/destination et la liste des sections, pas de polyligne.
+Lever ce manque nécessiterait d'exposer `legGeometry` depuis `OtpProvider`
+(F3) jusqu'à `JourneySection` — décision à prendre séparément, pas improvisée
+ici.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Turbopack
+
+`@serwist/next` (plugin webpack) ne supporte pas Turbopack, devenu le bundler
+par défaut de Next.js 16. `dev`/`build` passent donc explicitement
+`--webpack` (voir `package.json`, `next.config.ts`).
+
+### Hors périmètre de cette tranche (voir spec §2)
+
+Géocodage d'adresse (Nominatim), tableau de bord carbone/historique/export
+PDF (F4), durcissement du stockage de jetons.
