@@ -71,7 +71,7 @@ jobs:
           NODE_ENV: test
 
       - name: Test e2e
-        run: pnpm test:e2e
+        run: pnpm --filter @urbanflow/api test:e2e
         env:
           NODE_ENV: test
           DATABASE_URL: postgresql://urbanflow:urbanflow@localhost:5432/urbanflow_test
