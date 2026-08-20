@@ -5,3 +5,8 @@ allowBuilds:
   bcrypt: true
   sharp: false
   unrs-resolver: false
+overrides:
+  # jsdom@30.0.1 accepte ^8.9.0 ; 8.10.0 (latest) casse jsdom au chargement
+  # avec "webidl.util.markAsUncloneable is not a function" dans
+  # CacheStorage (régression amont, vue en CI seulement — Node 20/Linux).
+  undici: 8.9.0
