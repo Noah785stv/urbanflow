@@ -7,7 +7,16 @@ const PLAN_RESPONSE = {
       departureAt: '2026-08-17T08:00:00+02:00',
       arrivalAt: '2026-08-17T08:16:00+02:00',
       durationSeconds: 960,
-      sections: [{ mode: 'bus', durationSeconds: 960, distanceMeters: 3000 }],
+      sections: [
+        {
+          mode: 'bus',
+          durationSeconds: 960,
+          distanceMeters: 3000,
+          // Polyligne réelle capturée sur l'instance OTP locale (F2-geometry).
+          geometry:
+            'a|tdHr{fIXvJ?\\QBcAG{@O{A]C?gBi@c@Gm@?a@Ho@Ty@l@k@jAmAlCcBrC}@pAORq@r@c@f@wA`B]XQDK@uBt@K@g@RAMOwDCe@YwIgAIW@ODKJ]Ne@P{B|@eK|DgBl@[JqB\\Y?oA^oIdCsAVmLvBYVAECEACC?G?C@CBABAF@FkEt@sDt@wCh@}Cl@e@He@?AKAGAGAECECCCCCCEACAE?G@CBEBEDCDADADAFAF?F?F@F@DBF@DBBBDBBD@B@F?B?F\\Fl@DbAZhHJjAJb@CBCDCDCDAFAH?L@F@DBJFHHDD@B?NnALr@^`Cl@lEEDEDCFCDELCL?HAD@J@PDJDJDHDBLHDBH@H@HAFAHEHEBEDEBGf@Tr@Jl@LdAb@?L?D@J@DBFDDBBB@D@HABABCFGBIZTZd@dAvAAF?F?FBD@DDBBBD?DAFGlCtEDNTlAgAb@?@KFwBtCqCzDe@r@`AjC@DPd@^ZPTHTP`Cz@|NDNhArA\\b@ZNrDdAtBj@dAXb@Cx@O\\GNfCj@xBtC|Kx@zCFPJJHFNDNAhCU',
+        },
+      ],
       co2Grams: 339,
       estimatedCostCents: 180,
       labels: ['fastest'],
@@ -89,9 +98,16 @@ test('connexion (clavier) -> calcul -> 3 options classées -> sélection au clav
   const firstResultItem = resultsList.locator(':scope > li').first();
   const firstSelectButton = firstResultItem.getByRole('button').first();
 
+  // Avant sélection : aucun tracé sur la carte (F2-geometry §8).
+  await expect(page.locator('path.leaflet-interactive')).toHaveCount(0);
+
   await firstSelectButton.focus();
   await page.keyboard.press('Enter');
   await expect(firstSelectButton).toHaveText('✓ Sélectionné');
+
+  // Après sélection : le tracé réel du bus apparaît (rendu Leaflet réel, pas
+  // un mock jsdom — la géométrie du premier tronçon décode en > 1 point).
+  await expect(page.locator('path.leaflet-interactive')).toHaveCount(1);
 });
 
 test('mode dégradé : réponse stale et vide affichée sans jamais planter (§4.6-like)', async ({
