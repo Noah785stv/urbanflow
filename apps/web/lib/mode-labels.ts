@@ -19,3 +19,17 @@ export const JOURNEY_LABEL_TEXT: Record<JourneyLabel, string> = {
   greenest: 'Le plus écologique',
   cheapest: 'Le moins cher',
 };
+
+/** Couleur du tracé par mode sur la carte (F2-geometry §6) — transport en commun visuellement distinct de marche/vélo. */
+export const MODE_COLORS: Record<TransportMode, string> = {
+  [TransportMode.Walk]: '#71717a',
+  [TransportMode.Bike]: '#16a34a',
+  [TransportMode.ElectricBike]: '#15803d',
+  [TransportMode.Scooter]: '#f59e0b',
+  [TransportMode.Metro]: '#7c3aed',
+  [TransportMode.Tram]: '#0891b2',
+  [TransportMode.Bus]: '#ea580c',
+  [TransportMode.RegionalTrain]: '#be123c',
+  [TransportMode.CarSolo]: '#4b5563',
+  [TransportMode.Carpool]: '#0d9488',
+};
