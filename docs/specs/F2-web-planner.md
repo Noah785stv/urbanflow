@@ -26,9 +26,6 @@ problèmes d'intégration.
 
 **Exclu (itérations suivantes) :**
 
-- **Tracé de l'itinéraire sur la carte** : nécessite la géométrie des tronçons, que
-  l'API ne renvoie pas encore (voir §3, point à signaler). La tranche affiche des
-  marqueurs + les options en liste, pas la polyligne du parcours.
 - Recherche d'adresse (géocodage Nominatim) : reportée pour ne pas ajouter une
   dépendance externe dans cette tranche. Interaction MVP = géolocalisation + clic carte.
 - Tableau de bord carbone, historique, export PDF → **F4**.
@@ -45,14 +42,15 @@ problèmes d'intégration.
 - Corps : `PlanTripRequest { from: {latitude, longitude}, to: {latitude, longitude},
 departureAt?, excludeModes?, accessibleOnly? }`.
 - Réponse : `PlannedJourney[]` avec `departureAt`, `arrivalAt`, `durationSeconds`,
-  `sections[{ mode, durationSeconds, distanceMeters }]`, `co2Grams`,
+  `sections[{ mode, durationSeconds, distanceMeters, geometry? }]`, `co2Grams`,
   `estimatedCostCents`, `labels[]` (`fastest` | `greenest` | `cheapest`).
 
-> ⚠️ **Point à signaler (contrat d'API).** La réponse ne contient **aucune géométrie**
-> de tronçon → impossible de tracer le parcours réel sur la carte. Deux voies :
-> (a) reporter le tracé (retenu pour cette tranche) ; (b) ajouter `legGeometry` à
-> l'`OtpRoutingProvider` (F3) et aux types partagés (`JourneySection`). C'est le
-> prochain incrément backend logique ; à décider ensemble, ne pas l'improviser ici.
+> ✅ **Point résolu (contrat d'API).** Le manque de géométrie signalé ci-dessous a
+> été comblé par l'incrément transversal `F2-geometry` (voir
+> `docs/specs/F2-geometry.md`) : `JourneySection.geometry` porte désormais la
+> polyligne encodée (format Google, précision 5) du tronçon, décodée côté client
+> uniquement (sobriété du payload). Champ **optionnel** — absence sans impact sur
+> le calcul carbone, le coût ou le classement.
 
 ## 4. Stack frontend
 
@@ -97,7 +95,8 @@ Les `PlannedJourney` sont présentés en **liste sémantique**, une carte par op
 - durée, **CO₂ (`co2Grams`)**, coût (`estimatedCostCents`, ou « estimation
   indisponible » si `null`) ;
 - décomposition des `sections` (suite de modes avec durée/distance).
-  Sélectionner une option la met en évidence (et, plus tard, tracera son parcours).
+  Sélectionner une option la met en évidence et trace son parcours réel sur la
+  carte, tronçon par tronçon (couleur par mode) — voir `F2-geometry.md`.
 
 ## 9. Authentification côté client
 
@@ -164,8 +163,8 @@ Variable d'env : `NEXT_PUBLIC_API_URL=http://localhost:3001/api/v1` (dans
 
 ## 16. Points à signaler pendant l'implémentation
 
-- **Géométrie manquante dans l'API** (§3) : ne pas tracer de parcours bricolé ;
-  signaler et décider de l'ajout de `legGeometry` en incrément backend.
+- **Géométrie manquante dans l'API** (§3) : ✅ résolu par l'incrément
+  `F2-geometry` (`docs/specs/F2-geometry.md`).
 - **Stockage de tokens** : en mémoire ici, durcissement (cookies httpOnly) reporté.
 - **Vérification e-mail en dev** : documenter le raccourci (token journalisé).
 - Toute contrainte rendant une règle infaisable → la signaler et synchroniser cette

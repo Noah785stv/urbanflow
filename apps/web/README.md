@@ -39,9 +39,9 @@ trajet → voir les 3 itinéraires classés avec leur CO₂ sur une carte**.
 - `/login`, `/register` : authentification (F1). L'inscription inclut une
   étape de vérification par token collé manuellement — F1 n'envoie pas
   d'e-mail réel, le lien est journalisé côté API en dev.
-- `/` (protégée) : carte Leaflet/OSM (marqueurs, pas de tracé — voir
-  divergence de contrat ci-dessous), origine par géolocalisation ou clic
-  carte, saisie clavier des coordonnées, `POST /trips/plan`, 3 options
+- `/` (protégée) : carte Leaflet/OSM (marqueurs + tracé réel de l'itinéraire
+  sélectionné, voir F2-geometry ci-dessous), origine par géolocalisation ou
+  clic carte, saisie clavier des coordonnées, `POST /trips/plan`, 3 options
   classées (`fastest`/`greenest`/`cheapest`).
 
 ### Points clés
@@ -62,14 +62,17 @@ trajet → voir les 3 itinéraires classés avec leur CO₂ sur une carte**.
   par `axe-core` (0 violation critical/serious) sur `/login`, `/register` et
   le planificateur.
 
-### Divergence de contrat signalée (§3)
+### Tracé de l'itinéraire (F2-geometry)
 
-`PlannedJourney.sections` ne porte aucune géométrie de tronçon : impossible
-de tracer l'itinéraire réel sur la carte. Cette tranche affiche des
-marqueurs origine/destination et la liste des sections, pas de polyligne.
-Lever ce manque nécessiterait d'exposer `legGeometry` depuis `OtpProvider`
-(F3) jusqu'à `JourneySection` — décision à prendre séparément, pas improvisée
-ici.
+Spec : `docs/specs/F2-geometry.md`. `JourneySection.geometry` porte la
+polyligne du tronçon **encodée** (format Google, précision 5) telle que
+renvoyée par OTP — le serveur ne la décode jamais, seul le client le fait
+(`lib/decode-geometry.ts`, via `@mapbox/polyline`), pour garder le payload
+sobre (éco-conception, C5/RGESN). Sélectionner une option dessine son tracé
+sur la carte, un `Polyline` par tronçon coloré selon le mode
+(`lib/mode-labels.ts#MODE_COLORS`), avec recadrage automatique
+(`fitBounds`). Champ **optionnel** : un tronçon sans géométrie n'est
+simplement pas dessiné, sans erreur.
 
 ### Turbopack
 
