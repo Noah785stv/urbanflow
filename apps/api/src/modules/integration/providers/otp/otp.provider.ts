@@ -86,6 +86,9 @@ const OTP_PLAN_CONNECTION_QUERY = `
             mode
             duration
             distance
+            legGeometry {
+              points
+            }
           }
         }
       }
@@ -258,6 +261,7 @@ export class OtpProvider implements TransitProvider, RoutingProvider {
       mode: this.mapMode(leg.mode),
       durationSeconds: leg.duration,
       distanceMeters: Math.round(leg.distance),
+      geometry: leg.legGeometry?.points ?? undefined,
     };
   }
 

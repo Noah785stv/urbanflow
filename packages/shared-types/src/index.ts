@@ -112,6 +112,14 @@ export interface JourneySection {
   mode: TransportMode;
   durationSeconds: number;
   distanceMeters: number;
+  /**
+   * Polyligne encodée (format Google, précision 5) du tracé du tronçon
+   * (F2-geometry §3-4). Transportée encodée jusqu'au front pour sobriété du
+   * payload — décodée côté client, jamais côté serveur. Optionnelle : un
+   * tronçon sans géométrie connue ne doit jamais faire échouer le calcul
+   * carbone, le coût ou le classement, qui n'en dépendent pas.
+   */
+  geometry?: string;
 }
 
 /** Option d'itinéraire retournée par `RoutingProvider.getJourneys` (consommée par F2). */
