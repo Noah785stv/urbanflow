@@ -109,55 +109,20 @@ describe('OtpProvider', () => {
               mode: TransportMode.Walk,
               durationSeconds: 75,
               distanceMeters: 79,
-              geometry: 'c|tdHfufIMZ?J?J?HDd@B`A@\\@FG@',
             },
             {
               mode: TransportMode.Bus,
               durationSeconds: 930,
               distanceMeters: 5357,
-              geometry:
-                'a|tdHr{fIXvJ?\\QBcAG{@O{A]C?gBi@c@Gm@?a@Ho@Ty@l@k@jAmAlCcBrC}@pAORq@r@c@f@wA`B]XQDK@uBt@K@g@RAMOwDCe@YwIgAIW@ODKJ]Ne@P{B|@eK|DgBl@[JqB\\Y?oA^oIdCsAVmLvBYVAECEACC?G?C@CBABAF@FkEt@sDt@wCh@}Cl@e@He@?AKAGAGAECECCCCCCEACAE?G@CBEBEDCDADADAFAF?F?F@F@DBF@DBBBDBBD@B@F?B?F\\Fl@DbAZhHJjAJb@CBCDCDCDAFAH?L@F@DBJFHHDD@B?NnALr@^`Cl@lEEDEDCFCDELCL?HAD@J@PDJDJDHDBLHDBH@H@HAFAHEHEBEDEBGf@Tr@Jl@LdAb@?L?D@J@DBFDDBBB@D@HABABCFGBIZTZd@dAvAAF?F?FBD@DDBBBD?DAFGlCtEDNTlAgAb@?@KFwBtCqCzDe@r@`AjC@DPd@^ZPTHTP`Cz@|NDNhArA\\b@ZNrDdAtBj@dAXb@Cx@O\\GNfCj@xBtC|Kx@zCFPJJHFNDNAhCU',
             },
             {
               mode: TransportMode.Walk,
               durationSeconds: 278,
               distanceMeters: 350,
-              geometry:
-                'cbwdH|rlIAMbAMPAB?DAB?d@ElBSNA?G?ENELDHL@JTJj@RT@l@ANB^EAu@@KDMBQTJVC',
             },
           ],
         },
       ]);
-    });
-
-    it('n’échoue pas et omet `geometry` si legGeometry est absent (§4)', async () => {
-      httpPost.mockReturnValue(
-        of({
-          data: {
-            data: {
-              planConnection: {
-                edges: [
-                  {
-                    node: {
-                      start: '2026-08-17T08:00:00+02:00',
-                      end: '2026-08-17T08:10:00+02:00',
-                      duration: 600,
-                      legs: [{ mode: 'WALK', duration: 600, distance: 800 }],
-                    },
-                  },
-                ],
-              },
-            },
-          },
-        }),
-      );
-
-      const result = await provider.getJourneys({
-        origin: { latitude: 48.1173, longitude: -1.6778 },
-        destination: { latitude: 48.1257, longitude: -1.7075 },
-      });
-
-      expect(result[0]?.sections[0]?.geometry).toBeUndefined();
     });
 
     it('distanceMeters est non nul (le bug Navitia distanceMeters=0 est résolu, ADR-005)', async () => {

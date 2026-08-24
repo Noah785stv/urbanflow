@@ -104,8 +104,7 @@ A→B complet), `Segment` (portion sur un seul mode), `Mode` (moyen de transport
 
 ## Modèle de données (§5.3)
 
-Entités : `user`, `mobility_profile`, `trip`, `trip_segment` (non
-implémentées, F4 — voir divergence ci-dessous), `emission_factor`,
+Entités : `user`, `mobility_profile`, `trip`, `trip_segment`, `emission_factor`,
 `carbon_log`, `station`. Clés primaires en UUID. Les `emission_factor` sont
 **versionnés par date** (`valid_from`) : une mise à jour des facteurs ADEME ne
 doit pas altérer l'historique.
@@ -116,15 +115,6 @@ doit pas altérer l'historique.
 > commun). Domicile/travail (`mobility_profile`) restent **hors PostGIS** :
 > chiffrés en AES-256-GCM au niveau applicatif, jamais requêtés spatialement
 > (privacy-by-design, cf. `docs/specs/F1-auth.md` §4.3).
-
-> ⚠️ **Minimisation `carbon_log` (divergence F4, privacy-by-design).** Le
-> dossier modélise `trip` → `trip_segment` → `emission_factor` + `carbon_log`,
-> avec des segments géolocalisés. F4 ne persiste **ni `trip` ni
-> `trip_segment`** : un trajet confirmé écrit directement un `carbon_log`
-> minimisé (empreinte agrégée + décomposition par mode en `jsonb`, sans
-> origine ni destination). `emission_factor` reste conforme au dossier
-> (versionné par `valid_from`). Choix privacy-by-design, cf.
-> `docs/specs/F4-carbon.md` §4.2.
 
 ## Fonctionnalités du MVP (§4)
 

@@ -36,18 +36,11 @@ export interface OtpStopDeparturesResponse {
   errors?: Array<{ message: string }>;
 }
 
-/** `Geometry` (F2-geometry §5) : `points` est une polyligne encodée (format Google, précision 5), pas un tableau de coordonnées. */
-export interface OtpGeometry {
-  points: string | null;
-  length: number | null;
-}
-
 export interface OtpLeg {
   /** Enum `Mode` (WALK, BICYCLE, BUS, SUBWAY, TRAM, RAIL, ...). */
   mode: string;
   duration: number; // secondes
   distance: number; // mètres — toujours renseigné (contrairement au bug distanceMeters=0 de Navitia)
-  legGeometry: OtpGeometry | null;
 }
 
 export interface OtpItinerary {
