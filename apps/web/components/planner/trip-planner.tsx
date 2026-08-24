@@ -4,6 +4,7 @@ import type { Coordinates, PlannedJourney } from '@urbanflow/shared-types';
 import dynamic from 'next/dynamic';
 import { useMemo, useState } from 'react';
 import { ApiError } from '../../lib/api-client';
+import { confirmTrip } from '../../lib/carbon-api';
 import { getCurrentPosition, RENNES_CENTER } from '../../lib/geolocation';
 import { readLastPlan, writeLastPlan } from '../../lib/last-plan-cache';
 import {
@@ -12,8 +13,10 @@ import {
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
 } from '../../lib/styles';
+import { toConfirmTripRequest } from '../../lib/to-confirm-trip-request';
 import { planTrip } from '../../lib/trip-api';
 import { CoordinateFields } from './coordinate-fields';
+import type { ConfirmTripStatus } from './trip-result-card';
 import { TripResults } from './trip-results';
 
 const TripMap = dynamic(() => import('./trip-map'), {
@@ -42,6 +45,15 @@ export function TripPlanner() {
   const [stale, setStale] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [isOffline, setIsOffline] = useState(false);
+
+  const [confirmStatus, setConfirmStatus] = useState<ConfirmTripStatus>('idle');
+  const [confirmError, setConfirmError] = useState<string | null>(null);
+
+  function handleSelect(index: number) {
+    setSelectedIndex(index);
+    setConfirmStatus('idle');
+    setConfirmError(null);
+  }
 
   async function handleUseMyPosition() {
     setGeoStatus('loading');
@@ -81,6 +93,8 @@ export function TripPlanner() {
     setPlanError(null);
     setSelectedIndex(null);
     setIsOffline(false);
+    setConfirmStatus('idle');
+    setConfirmError(null);
 
     try {
       const result = await planTrip({ from: origin, to: destination });
@@ -112,6 +126,25 @@ export function TripPlanner() {
     () => (selectedIndex !== null ? (journeys[selectedIndex] ?? null) : null),
     [journeys, selectedIndex],
   );
+
+  async function handleConfirmTrip() {
+    if (!selectedJourney) {
+      return;
+    }
+
+    setConfirmStatus('pending');
+    setConfirmError(null);
+
+    try {
+      await confirmTrip(toConfirmTripRequest(selectedJourney));
+      setConfirmStatus('success');
+    } catch (error) {
+      setConfirmStatus('error');
+      setConfirmError(
+        error instanceof ApiError ? error.message : 'Enregistrement impossible pour le moment.',
+      );
+    }
+  }
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 p-4 md:p-6">
@@ -210,7 +243,12 @@ export function TripPlanner() {
           journeys={journeys}
           stale={stale}
           selectedIndex={selectedIndex}
-          onSelect={setSelectedIndex}
+          onSelect={handleSelect}
+          confirmStatus={confirmStatus}
+          confirmError={confirmError}
+          onConfirm={() => {
+            void handleConfirmTrip();
+          }}
         />
       </div>
     </div>
