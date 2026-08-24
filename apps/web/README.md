@@ -84,3 +84,34 @@ par défaut de Next.js 16. `dev`/`build` passent donc explicitement
 
 Géocodage d'adresse (Nominatim), tableau de bord carbone/historique/export
 PDF (F4), durcissement du stockage de jetons.
+
+## Design system — fondation (`docs/design-system.md`)
+
+Tokens (`app/globals.css` `@theme`, Tailwind 4 — pas de `tailwind.config.js`)
+et composants de base réutilisables (`components/ui/`) : `Button`, `Input`,
+`Card`, `ModeChip`, `RankingBadge`. **Appliqués pour l'instant uniquement à
+`/login`**, comme preuve de direction avant propagation aux autres écrans —
+qui continuent d'utiliser `lib/styles.ts` sans changement.
+
+- **Tokens `brand-blue-*`/`brand-green-*`** : préfixés volontairement.
+  `blue`/`green` sont déjà des noms de palette Tailwind natifs ; les
+  redéclarer directement aurait re-teinté tout usage existant de
+  `bg-blue-700` etc. ailleurs dans l'app avant que la propagation ne soit
+  décidée. Alignés sur la palette native (mêmes valeurs) au moment de la
+  propagation complète.
+- **Fonts** : IBM Plex Sans (400/600) + IBM Plex Mono (500) via `next/font`,
+  remplacent Geist globalement (inévitable — un seul `<html>` racine).
+- **Focus visible (§5) : `ring-*`, pas `outline-*`.** Constaté en navigateur
+  réel : sur `<button>` (natif, `appearance: button` non réinitialisé par
+  Preflight Tailwind 4), `outline-color` en `:focus-visible` — testé sous
+  trois formes (`outline-black`, `var(--color-black)`, hex direct
+  `outline-[#000]`) — se réduit systématiquement à `currentColor`, alors que
+  le même utilitaire fonctionne correctement sur `<input>`. Cause exacte non
+  élucidée (probablement liée au rendu du widget natif du bouton) ;
+  contournée en utilisant `ring-[3px] ring-[#000] ring-offset-2`
+  (`box-shadow`, indépendant du rendu natif) pour tous les composants
+  `components/ui/*`, bouton et champ confondus. Vérifié en DOM réel
+  (`getComputedStyle`), pas seulement en test unitaire.
+- **`Button` désactivé = `aria-disabled`, pas l'attribut natif `disabled`**
+  (design-system.md §4) : reste focusable/repérable au clavier, le clic est
+  neutralisé côté composant.
