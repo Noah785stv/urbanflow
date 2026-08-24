@@ -1,10 +1,13 @@
 'use client';
 
-import type { Coordinates } from '@urbanflow/shared-types';
+import type { Coordinates, PlannedJourney } from '@urbanflow/shared-types';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { MapContainer, Marker, TileLayer, useMapEvents } from 'react-leaflet';
+import { useEffect, useMemo } from 'react';
+import { MapContainer, Marker, Polyline, TileLayer, useMap, useMapEvents } from 'react-leaflet';
+import { decodeSections } from '../../lib/decode-geometry';
 import { RENNES_CENTER } from '../../lib/geolocation';
+import { MODE_COLORS } from '../../lib/mode-labels';
 
 function createPinIcon(color: string, label: string): L.DivIcon {
   return L.divIcon({
@@ -31,19 +34,54 @@ function ClickHandler({ onMapClick }: ClickHandlerProps) {
   return null;
 }
 
+interface FitBoundsProps {
+  positions: [number, number][];
+}
+
+/** Recadre la carte sur le tracé sélectionné (F2-geometry §6). */
+function FitBounds({ positions }: FitBoundsProps) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (positions.length === 0) {
+      return;
+    }
+    map.fitBounds(positions, { padding: [32, 32] });
+  }, [map, positions]);
+
+  return null;
+}
+
 interface TripMapProps {
   origin: Coordinates | null;
   destination: Coordinates | null;
   onMapClick: (coordinates: Coordinates) => void;
+  selectedJourney: PlannedJourney | null;
 }
 
 /**
  * Carte Leaflet + OSM (§7) — complément visuel : le clic pose
  * origine/destination, mais la source d'information accessible reste la
  * liste de résultats et les champs de coordonnées (§7, §11), pas la carte.
+ * Le tracé de l'itinéraire sélectionné (F2-geometry) est un tronçon par
+ * `Polyline`, coloré par mode ; un tronçon sans géométrie n'est pas dessiné.
  */
-export default function TripMap({ origin, destination, onMapClick }: TripMapProps) {
+export default function TripMap({
+  origin,
+  destination,
+  onMapClick,
+  selectedJourney,
+}: TripMapProps) {
   const center = origin ?? RENNES_CENTER;
+
+  const decodedSections = useMemo(
+    () => (selectedJourney ? decodeSections(selectedJourney.sections) : []),
+    [selectedJourney],
+  );
+  const allPositions = useMemo(
+    () => decodedSections.flatMap((section) => section.positions),
+    [decodedSections],
+  );
 
   return (
     <MapContainer
@@ -58,6 +96,14 @@ export default function TripMap({ origin, destination, onMapClick }: TripMapProp
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
       <ClickHandler onMapClick={onMapClick} />
+      {decodedSections.map((section, index) => (
+        <Polyline
+          key={`${section.mode}-${index}`}
+          positions={section.positions}
+          pathOptions={{ color: MODE_COLORS[section.mode], weight: 5, opacity: 0.8 }}
+        />
+      ))}
+      {allPositions.length > 0 && <FitBounds positions={allPositions} />}
       {origin && <Marker position={[origin.latitude, origin.longitude]} icon={originIcon} />}
       {destination && (
         <Marker position={[destination.latitude, destination.longitude]} icon={destinationIcon} />

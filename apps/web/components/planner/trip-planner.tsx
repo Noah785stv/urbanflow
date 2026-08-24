@@ -2,7 +2,7 @@
 
 import type { Coordinates, PlannedJourney } from '@urbanflow/shared-types';
 import dynamic from 'next/dynamic';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ApiError } from '../../lib/api-client';
 import { getCurrentPosition, RENNES_CENTER } from '../../lib/geolocation';
 import { readLastPlan, writeLastPlan } from '../../lib/last-plan-cache';
@@ -108,6 +108,10 @@ export function TripPlanner() {
   }
 
   const canSubmit = Boolean(origin && destination) && !isPlanning;
+  const selectedJourney = useMemo(
+    () => (selectedIndex !== null ? (journeys[selectedIndex] ?? null) : null),
+    [journeys, selectedIndex],
+  );
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 p-4 md:p-6">
@@ -193,7 +197,12 @@ export function TripPlanner() {
           )}
 
           <div className="h-80 md:h-[28rem]">
-            <TripMap origin={origin} destination={destination} onMapClick={handleMapClick} />
+            <TripMap
+              origin={origin}
+              destination={destination}
+              onMapClick={handleMapClick}
+              selectedJourney={selectedJourney}
+            />
           </div>
         </form>
 

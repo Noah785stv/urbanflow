@@ -184,6 +184,11 @@ Orchestration `RoutingProvider.getJourneys` (F3) → enrichissement carbone/coû
   la liste. **`accessibleOnly`** est accueilli par l'API mais pas encore
   appliqué au tri — `OtpProvider` n'expose pas encore de donnée
   d'accessibilité PMR par section (voir `docs/specs/F2-planner.md` §12).
+- **`section.geometry`** (F2-geometry, `docs/specs/F2-geometry.md`) : polyligne
+  encodée (format Google, précision 5) du tronçon, transmise **telle quelle**
+  depuis `OtpProvider` (champ `legGeometry.points`) — jamais décodée côté
+  serveur, pour limiter la taille du payload. Champ **optionnel**, sans effet
+  sur le calcul carbone, le coût ou le classement.
 
 ### Hors périmètre F2 (voir spec §2, §12)
 
