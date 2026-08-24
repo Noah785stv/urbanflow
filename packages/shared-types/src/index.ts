@@ -1,6 +1,10 @@
 /**
  * Types partagés front <-> back.
  * Reflète le lexique métier univoque du dossier (§4.2) : Trip, Segment, Mode.
+ * Les types `Trip`/`Segment` d'origine (scaffolding pré-F2) ont été retirés,
+ * non utilisés : le vocabulaire `Trip`/`Segment` du dossier est aujourd'hui
+ * porté par `JourneyOption`/`PlannedJourney`/`JourneySection` (F2) et
+ * `CarbonLog`/`ModeBreakdownEntry` (F4).
  */
 
 /**
@@ -31,22 +35,6 @@ export type TransportMode = (typeof TransportMode)[keyof typeof TransportMode];
 export interface Coordinates {
   latitude: number;
   longitude: number;
-}
-
-/** Segment : portion d'un Trip effectuée sur un seul Mode. */
-export interface Segment {
-  mode: TransportMode;
-  distanceKm: number;
-  co2Grams: number;
-}
-
-/** Trip : déplacement complet d'un point A à un point B. */
-export interface Trip {
-  origin: Coordinates;
-  destination: Coordinates;
-  segments: Segment[];
-  totalDistanceKm: number;
-  totalCo2Grams: number;
 }
 
 /**
@@ -112,6 +100,14 @@ export interface JourneySection {
   mode: TransportMode;
   durationSeconds: number;
   distanceMeters: number;
+  /**
+   * Polyligne encodée (format Google, précision 5) du tracé du tronçon
+   * (F2-geometry §3-4). Transportée encodée jusqu'au front pour sobriété du
+   * payload — décodée côté client, jamais côté serveur. Optionnelle : un
+   * tronçon sans géométrie connue ne doit jamais faire échouer le calcul
+   * carbone, le coût ou le classement, qui n'en dépendent pas.
+   */
+  geometry?: string;
 }
 
 /** Option d'itinéraire retournée par `RoutingProvider.getJourneys` (consommée par F2). */
@@ -145,4 +141,59 @@ export interface PlanTripRequest {
   excludeModes?: TransportMode[];
   /** Contrainte PMR (§5.5) — accueillie par l'API ; non encore appliquée au tri (voir F2-planner.md §12). */
   accessibleOnly?: boolean;
+}
+
+/** Empreinte d'un mode au sein d'un `CarbonLog` (F4, §4.2). */
+export interface ModeBreakdownEntry {
+  mode: TransportMode;
+  distanceMeters: number;
+  co2Grams: number;
+}
+
+/**
+ * `CarbonLog` : empreinte d'un trajet confirmé (F4, §4.2). Minimisé par
+ * conception (RGPD) — ni origine ni destination, seulement l'agrégat par
+ * mode. `userId`/`tenantId` ne sont jamais exposés : la liste est toujours
+ * filtrée sur l'utilisateur courant côté serveur.
+ */
+export interface CarbonLog {
+  id: string;
+  loggedAt: string;
+  co2Grams: number;
+  distanceMeters: number;
+  referenceCo2Grams: number;
+  savedGrams: number;
+  modeBreakdown: ModeBreakdownEntry[];
+  createdAt: string;
+}
+
+/** Corps de la requête `POST /carbon-logs` (F4, §6) — confirmation d'un trajet. */
+export interface ConfirmTripRequest {
+  /** ISO 8601 ; défaut = maintenant. */
+  loggedAt?: string;
+  sections: Array<{ mode: TransportMode; distanceMeters: number }>;
+}
+
+/** Page de résultats paginée de `GET /carbon-logs` (F4, §7). */
+export interface CarbonLogPage {
+  items: CarbonLog[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+/** Agrégat d'un mois pour le tableau de bord (F4, §7). */
+export interface MonthlyCarbonBreakdown {
+  /** Format `YYYY-MM`. */
+  month: string;
+  co2Grams: number;
+  savedGrams: number;
+  tripCount: number;
+}
+
+/** Réponse de `GET /carbon-logs/summary` (F4, §7). */
+export interface CarbonLogSummary {
+  totalCo2Grams: number;
+  totalSavedGrams: number;
+  monthly: MonthlyCarbonBreakdown[];
 }

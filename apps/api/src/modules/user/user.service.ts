@@ -8,6 +8,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { EncryptionService } from '../../common/crypto/encryption.service';
 import { AuthService } from '../auth/auth.service';
+import { CarbonLogService } from '../carbon/carbon-log.service';
 import { UpdateMobilityProfileDto } from './dto/update-mobility-profile.dto';
 import { MobilityProfile } from './entities/mobility-profile.entity';
 import { User } from './entities/user.entity';
@@ -40,6 +41,7 @@ export class UserService {
     private readonly mobilityProfileRepository: Repository<MobilityProfile>,
     private readonly encryptionService: EncryptionService,
     private readonly authService: AuthService,
+    private readonly carbonLogService: CarbonLogService,
   ) {}
 
   async getProfile(userId: string): Promise<UserProfileResponse> {
@@ -107,6 +109,12 @@ export class UserService {
     profile.geolocationConsent = false;
     profile.geolocationConsentAt = null;
     await this.mobilityProfileRepository.save(profile);
+
+    // Les `carbon_log` sont déjà minimisés (ni origine ni destination, F4
+    // §4.2) mais restent liés à l'utilisateur : purge avec le compte (§9).
+    // Pas de FK CASCADE possible ici (le compte est soft-deleted, jamais
+    // réellement supprimé) — suppression explicite, comme pour le profil.
+    await this.carbonLogService.deleteAllForUser(user.tenantId, userId);
 
     await this.authService.logout(userId);
   }

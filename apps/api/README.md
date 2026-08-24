@@ -184,10 +184,68 @@ Orchestration `RoutingProvider.getJourneys` (F3) → enrichissement carbone/coû
   la liste. **`accessibleOnly`** est accueilli par l'API mais pas encore
   appliqué au tri — `OtpProvider` n'expose pas encore de donnée
   d'accessibilité PMR par section (voir `docs/specs/F2-planner.md` §12).
+- **`section.geometry`** (F2-geometry, `docs/specs/F2-geometry.md`) : polyligne
+  encodée (format Google, précision 5) du tronçon, transmise **telle quelle**
+  depuis `OtpProvider` (champ `legGeometry.points`) — jamais décodée côté
+  serveur, pour limiter la taille du payload. Champ **optionnel**, sans effet
+  sur le calcul carbone, le coût ou le classement.
 
 ### Hors périmètre F2 (voir spec §2, §12)
 
 Le volet frontend (formulaire, carte Leaflet, géolocalisation navigateur)
-ouvrira un chantier dédié quand `apps/web` sera développé. La persistance du
-trajet (`trip`, `trip_segment`) et l'historique carbone (`carbon_log`)
-appartiennent à F4 — F2 est un calcul à la volée, sans écriture en base.
+ouvrira un chantier dédié quand `apps/web` sera développé. `POST /trips/plan`
+reste un calcul à la volée, sans écriture en base — la persistance carbone
+(`carbon_log`) est fournie par le module Carbon Log ci-dessous (F4), sur
+confirmation explicite d'un trajet.
+
+## Module Carbon Log — Empreinte confirmée & agrégats (F4)
+
+Persistance et agrégation des trajets confirmés (spec :
+`docs/specs/F4-carbon.md`). Ne recalcule pas la formule carbone : consomme
+`CarbonEstimatorService` (module `carbon`, F2, testé à 100 %, **inchangé**)
+comme seule source de vérité pour le CO₂.
+
+| Méthode | Route                                      | Auth                | Description                                                                         |
+| :------ | :----------------------------------------- | :------------------ | :---------------------------------------------------------------------------------- |
+| POST    | `/api/v1/carbon-logs`                      | Bearer access token | Corps `ConfirmTripRequest` → recalcule le CO₂ côté serveur, persiste un `CarbonLog` |
+| GET     | `/api/v1/carbon-logs`                      | Bearer access token | Liste paginée des logs de l'utilisateur courant (12 mois glissants)                 |
+| GET     | `/api/v1/carbon-logs/summary`              | Bearer access token | Agrégats mensuels, cumul, économie vs voiture solo (tableau de bord)                |
+| GET     | `/api/v1/carbon-logs/report?month=YYYY-MM` | Bearer access token | Bilan mensuel en PDF (`pdfkit`)                                                     |
+
+### Points clés (§5-9)
+
+- **Facteurs versionnés** (`EmissionFactorService.getCurrentFactors()`) :
+  branchés sur le token `EMISSION_FACTORS` existant (`useFactory`, table
+  `emission_factor`, la plus récente version par mode dont `valid_from <=
+now()`). Repli **par mode** sur `DEFAULT_EMISSION_FACTORS` si la table est
+  vide ou partiellement seedée — jamais de blocage au démarrage.
+  > ⚠️ **Résolution au démarrage.** Ce `useFactory` s'exécute une seule fois
+  > (provider singleton Nest) : une mise à jour de `emission_factor` en base
+  > n'est prise en compte qu'après redémarrage de l'API. Les `carbon_log`
+  > déjà confirmés ne sont de toute façon jamais recalculés (voir plus bas) —
+  > seule la fraîcheur des _futures_ confirmations est concernée.
+- **Recalcul serveur systématique** : `ConfirmTripDto` n'accepte que
+  `{ mode, distanceMeters }` par tronçon — aucun champ CO₂ n'existe côté
+  client, whitelisté ou non (`ValidationPipe` + absence du champ dans le DTO).
+  `reference_co2_grams` (comparaison voiture solo) est obtenu en rappelant
+  `CarbonEstimatorService` sur une section `CarSolo` synthétique de la
+  distance totale — aucune formule dupliquée.
+- **Historisation figée** : un `CarbonLog` persisté n'est plus jamais
+  recalculé. Une mise à jour ultérieure des facteurs (nouvelle ligne
+  `emission_factor` à `valid_from` plus récent) n'altère jamais les logs déjà
+  confirmés.
+- **Minimisation RGPD** (§4.2, divergence documentée dans `CLAUDE.md` —
+  Modèle de données) : `carbon_log` ne stocke ni origine ni destination,
+  seulement l'empreinte agrégée et une décomposition par mode en `jsonb`.
+- **Suppression de compte** (F1) : `UserService.deleteAccount` appelle
+  `CarbonLogService.deleteAllForUser` — pas de `FK CASCADE` possible (le
+  compte est soft-deleted, jamais réellement supprimé), suppression
+  explicite comme pour `MobilityProfile`.
+- **Appartenance** : utilisateur et tenant proviennent systématiquement du
+  JWT (`@CurrentUser()`), jamais d'un paramètre de route.
+
+### Hors périmètre F4 (voir spec §3, §14)
+
+Le tableau de bord frontend (graphe d'historique, bouton « enregistrer ce
+trajet », export PDF déclenché depuis l'UI) est un incrément appairé séparé,
+non commencé ici.
