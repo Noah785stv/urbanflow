@@ -1,0 +1,6 @@
+# Lockfile généré par pnpm : chaque `pnpm install` peut réécrire sa mise en
+# forme (style de sérialisation YAML propre à la version de pnpm), même sans
+# changement de contenu. Le faire coïncider avec Prettier est fragile par
+# nature (source de deux échecs CI) — un lockfile est un contrat machine, pas
+# un fichier à styler.
+pnpm-lock.yaml
