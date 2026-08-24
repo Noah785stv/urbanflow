@@ -2,6 +2,7 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { EncryptionService } from '../../common/crypto/encryption.service';
 import { AuthService } from '../auth/auth.service';
+import { CarbonLogService } from '../carbon/carbon-log.service';
 import { MobilityProfile } from './entities/mobility-profile.entity';
 import { User } from './entities/user.entity';
 import { UserRole } from './enums/user-role.enum';
@@ -30,6 +31,7 @@ describe('UserService', () => {
   let mobilityProfileRepository: MockRepo;
   let encryptionService: { encrypt: jest.Mock; decrypt: jest.Mock };
   let authService: { logout: jest.Mock };
+  let carbonLogService: { deleteAllForUser: jest.Mock };
   let service: UserService;
 
   const baseUser: User = {
@@ -76,6 +78,7 @@ describe('UserService', () => {
       decrypt: jest.fn(),
     };
     authService = { logout: jest.fn() };
+    carbonLogService = { deleteAllForUser: jest.fn() };
 
     userRepository.findOne.mockResolvedValue({ ...baseUser });
     mobilityProfileRepository.findOne.mockResolvedValue({ ...baseProfile });
@@ -85,6 +88,7 @@ describe('UserService', () => {
       mobilityProfileRepository as unknown as Repository<MobilityProfile>,
       encryptionService as unknown as EncryptionService,
       authService as unknown as AuthService,
+      carbonLogService as unknown as CarbonLogService,
     );
   });
 
@@ -186,6 +190,12 @@ describe('UserService', () => {
 
       expect(lastSavedProfile?.homeLocationEncrypted).toBeNull();
       expect(lastSavedProfile?.geolocationConsent).toBe(false);
+
+      // Les carbon_log de l'utilisateur sont purgés avec le compte (F4 §9).
+      expect(carbonLogService.deleteAllForUser).toHaveBeenCalledWith(
+        'tenant-id',
+        'user-id',
+      );
 
       expect(authService.logout).toHaveBeenCalledWith('user-id');
     });
