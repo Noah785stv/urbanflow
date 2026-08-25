@@ -57,6 +57,22 @@ test.describe('Accessibilité — axe-core (§14 : 0 violation critical/serious)
     expect(seriousOrCritical(results)).toEqual([]);
   });
 
+  test('planificateur — liste de suggestions d’adresse ouverte (§A.3, combobox)', async ({
+    page,
+  }) => {
+    await mockNetwork(page);
+    await loginViaUi(page);
+    await expect(page).toHaveURL('/');
+
+    await page.getByRole('combobox', { name: 'Origine' }).fill('Origine test');
+    await expect(
+      page.getByRole('option', { name: 'Place de la Mairie, 35000 Rennes' }),
+    ).toBeVisible();
+
+    const results = await new AxeBuilder({ page }).analyze();
+    expect(seriousOrCritical(results)).toEqual([]);
+  });
+
   test('tableau de bord carbone (authentifié)', async ({ page }) => {
     await mockNetwork(page);
     await page.route(`${API_BASE}/carbon-logs/summary`, async (route) => {
