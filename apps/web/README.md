@@ -176,7 +176,16 @@ distanceMeters }` par tronçon via une fonction pure dédiée et testée
   géoloc explicite (opt-in, désactivé par défaut), minimisation du
   `CarbonLog` (aucune origine/destination), suppression de compte
   **immédiate** (voir CLAUDE.md §F1 — divergence positive avec le dossier,
-  qui annonçait un délai de 30 j).
+  qui annonçait un délai de 30 j), aucun cookie (jeton en mémoire, cf.
+  `lib/token-store.ts`), géocodage inversé de la position réelle pour
+  « Utiliser ma position » (pas seulement la recherche tapée), transferts
+  hors UE (hébergement front Vercel) et voie de réclamation CNIL.
+  > ⚠️ **Correction (revue ultérieure) : GBFS retiré de la page.** Le
+  > `GbfsProvider` backend (`apps/api`) existe et synchronise bien la table
+  > `station`, mais **rien dans `apps/web` ne l'appelle** — aucune page,
+  > aucun composant. La politique affirmait à tort que la disponibilité des
+  > vélos/trottinettes partagés provenait d'un flux GBFS visible dans
+  > l'app ; retiré tant que ce n'est pas réellement branché côté front.
 - **Pages d'erreur** : `app/not-found.tsx` (404), `app/error.tsx` (error
   boundary générique, requiert `'use client'` côté Next.js), `app/403/page.tsx`.
   Le 403 est construit et stylé mais **n'a pas de déclencheur réel
@@ -190,6 +199,46 @@ distanceMeters }` par tronçon via une fonction pure dédiée et testée
   vers `components/ui/tokens.ts` (`BUTTON_BASE_CLASS`/`BUTTON_VARIANT_CLASS`)
   pour que les deux composants restent visuellement identiques sans
   dupliquer les styles.
+
+## Passe d'accessibilité (durcissement C7)
+
+Couverture axe-core (0 violation critical/serious) étendue à **toutes** les
+pages : `/login`, `/register`, planificateur (repos + suggestions ouvertes),
+tableau de bord, `/confidentialite`, `/mentions-legales`, `/a-propos`,
+`/403`, 404. `app/error.tsx` (frontière d'erreur générique) fait exception :
+inatteignable par navigation réelle sans ajouter une route qui lève
+volontairement une exception (nouvelle logique applicative, hors périmètre
+d'une passe présentation) — testé à la place en jsdom via `axe-core`
+directement dans `app/error.test.tsx`.
+
+- **`e2e/keyboard-navigation.spec.ts` (nouveau).** Preuve en navigateur réel
+  de l'ordre de tabulation sur `/login` et le planificateur, plutôt qu'une
+  lecture du JSX — y compris la carte Leaflet et le combobox d'adresse,
+  signalés comme délicats. Aucun piège de focus trouvé : on entre dans la
+  carte et le combobox, et on en ressort normalement.
+  - Piège de méthode de test trouvé et corrigé en cours de route : un simple
+    `blur()` ne réinitialise pas le point de départ de tabulation de
+    Chromium après une connexion (il repart du dernier élément réellement
+    cliqué) — focaliser explicitement le lien d'évitement avant de tabuler
+    est fiable, `blur()` seul ne l'est pas.
+  - **Vraie trouvaille corrigée sur l'app** : les contrôles de zoom Leaflet
+    affichaient « Zoom in »/« Zoom out » — anglais sur un site `lang="fr"`.
+    `components/planner/trip-map.tsx` désactive désormais le contrôle par
+    défaut (`zoomControl={false}`) et le repose francisé (`<ZoomControl
+zoomInTitle="Zoomer" zoomOutTitle="Dézoomer" />`).
+- **Test `/dashboard` stabilisé, pas masqué.** Le `<h1>` de `CarbonDashboard`
+  se rend avant la fin du chargement ; le test n'attendait que ce titre puis
+  lançait axe immédiatement, ce qui percutait la navigation/le rendu encore
+  en cours sous forte parallélisation (piège documenté côté
+  `@axe-core/playwright` avec les navigations SPA — cause du flake, pas
+  l'app). Corrigé en attendant la région live existante (« Tableau de bord
+  carbone chargé. ») avant d'appeler axe. Vérifié sur 3 exécutions complètes
+  de la suite, pas un seul run vert isolé.
+- **Déjà conformes, aucune correction nécessaire** : alternative textuelle
+  du graphe mensuel (`<table>` toujours visible), régions live des résultats
+  d'itinéraire et de la confirmation d'enregistrement (`role="status"`),
+  `lang="fr"` global, titres de page uniques, labels de formulaire tous
+  câblés via `Input`.
 
 ## Design system (`docs/design-system.md`)
 

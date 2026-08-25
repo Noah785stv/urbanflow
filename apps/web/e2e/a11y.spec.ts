@@ -96,6 +96,12 @@ test.describe('Accessibilité — axe-core (§14 : 0 violation critical/serious)
     await expect(page).toHaveURL('/');
     await page.getByRole('link', { name: 'Tableau de bord' }).click();
     await expect(page.getByRole('heading', { name: 'Empreinte carbone' })).toBeVisible();
+    // Le <h1> est rendu avant la fin du chargement (CarbonDashboard) : sous
+    // forte parallélisation, lancer axe dès son apparition percute encore la
+    // navigation/le rendu en cours (piège connu d'@axe-core/playwright avec
+    // les navigations SPA — cause du flake, pas l'app). On attend le signal
+    // de fin de chargement réel (région live existante), pas le titre seul.
+    await expect(page.getByRole('status')).toHaveText('Tableau de bord carbone chargé.');
 
     const results = await new AxeBuilder({ page }).analyze();
     expect(seriousOrCritical(results)).toEqual([]);
