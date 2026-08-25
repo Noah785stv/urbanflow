@@ -1,13 +1,16 @@
 'use client';
 
 import type { PlannedJourney } from '@urbanflow/shared-types';
-import { TripResultCard } from './trip-result-card';
+import { TripResultCard, type ConfirmTripStatus } from './trip-result-card';
 
 interface TripResultsProps {
   journeys: PlannedJourney[];
   stale: boolean;
   selectedIndex: number | null;
   onSelect: (index: number) => void;
+  confirmStatus?: ConfirmTripStatus;
+  confirmError?: string | null;
+  onConfirm?: () => void;
 }
 
 function announcementFor(journeys: PlannedJourney[], stale: boolean): string {
@@ -23,7 +26,15 @@ function announcementFor(journeys: PlannedJourney[], stale: boolean): string {
 }
 
 /** Liste sémantique des résultats (§8) — région live pour annoncer le calcul (§11). */
-export function TripResults({ journeys, stale, selectedIndex, onSelect }: TripResultsProps) {
+export function TripResults({
+  journeys,
+  stale,
+  selectedIndex,
+  onSelect,
+  confirmStatus,
+  confirmError,
+  onConfirm,
+}: TripResultsProps) {
   return (
     <section aria-labelledby="results-heading" className="flex flex-col gap-3">
       <h2 id="results-heading" className="text-lg font-bold text-zinc-900">
@@ -48,6 +59,9 @@ export function TripResults({ journeys, stale, selectedIndex, onSelect }: TripRe
               journey={journey}
               isSelected={selectedIndex === index}
               onSelect={() => onSelect(index)}
+              confirmStatus={selectedIndex === index ? confirmStatus : undefined}
+              confirmError={selectedIndex === index ? confirmError : undefined}
+              onConfirm={selectedIndex === index ? onConfirm : undefined}
             />
           ))}
         </ol>

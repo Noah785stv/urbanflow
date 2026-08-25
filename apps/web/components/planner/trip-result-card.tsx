@@ -4,19 +4,32 @@ import type { PlannedJourney } from '@urbanflow/shared-types';
 import { useId } from 'react';
 import { formatCo2, formatCost, formatDistance, formatDuration } from '../../lib/format';
 import { JOURNEY_LABEL_TEXT, MODE_LABELS } from '../../lib/mode-labels';
-import { SECONDARY_BUTTON_CLASS } from '../../lib/styles';
+import { ERROR_TEXT_CLASS, PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS } from '../../lib/styles';
+
+export type ConfirmTripStatus = 'idle' | 'pending' | 'success' | 'error';
 
 interface TripResultCardProps {
   journey: PlannedJourney;
   isSelected: boolean;
   onSelect: () => void;
+  /** Confirmation du trajet (F4-web-dashboard §6) — n'a de sens que si `isSelected`. */
+  confirmStatus?: ConfirmTripStatus;
+  confirmError?: string | null;
+  onConfirm?: () => void;
 }
 
 /**
  * Une carte par option (§8). La sélection est portée par le texte du bouton
  * ET la mise en valeur du cadre — jamais par la couleur seule (§11 AA).
  */
-export function TripResultCard({ journey, isSelected, onSelect }: TripResultCardProps) {
+export function TripResultCard({
+  journey,
+  isSelected,
+  onSelect,
+  confirmStatus = 'idle',
+  confirmError = null,
+  onConfirm,
+}: TripResultCardProps) {
   const summaryId = useId();
 
   return (
@@ -73,6 +86,30 @@ export function TripResultCard({ journey, isSelected, onSelect }: TripResultCard
           </li>
         ))}
       </ol>
+
+      {isSelected && onConfirm && (
+        <div className="mt-3 border-t border-zinc-200 pt-3">
+          {confirmStatus === 'success' ? (
+            <p role="status" className="text-sm font-medium text-green-700">
+              ✓ Trajet enregistré dans votre tableau de bord carbone.
+            </p>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={onConfirm}
+                disabled={confirmStatus === 'pending'}
+                className={`${PRIMARY_BUTTON_CLASS} text-sm`}
+              >
+                {confirmStatus === 'pending' ? 'Enregistrement…' : 'Enregistrer ce trajet'}
+              </button>
+              {confirmStatus === 'error' && confirmError && (
+                <p className={`${ERROR_TEXT_CLASS} mt-2`}>{confirmError}</p>
+              )}
+            </>
+          )}
+        </div>
+      )}
     </li>
   );
 }
