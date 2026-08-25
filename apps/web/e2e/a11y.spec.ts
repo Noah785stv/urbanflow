@@ -100,4 +100,18 @@ test.describe('Accessibilité — axe-core (§14 : 0 violation critical/serious)
     const results = await new AxeBuilder({ page }).analyze();
     expect(seriousOrCritical(results)).toEqual([]);
   });
+
+  for (const path of ['/confidentialite', '/mentions-legales', '/a-propos', '/403']) {
+    test(path, async ({ page }) => {
+      await page.goto(path, { waitUntil: 'networkidle' });
+      const results = await new AxeBuilder({ page }).analyze();
+      expect(seriousOrCritical(results)).toEqual([]);
+    });
+  }
+
+  test('404 (route inconnue)', async ({ page }) => {
+    await page.goto('/une-route-qui-nexiste-pas', { waitUntil: 'networkidle' });
+    const results = await new AxeBuilder({ page }).analyze();
+    expect(seriousOrCritical(results)).toEqual([]);
+  });
 });

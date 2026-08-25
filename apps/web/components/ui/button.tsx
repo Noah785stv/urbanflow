@@ -1,19 +1,11 @@
 import type { ButtonHTMLAttributes } from 'react';
-import { FOCUS_RING, MIN_TARGET } from './tokens';
+import { BUTTON_BASE_CLASS, BUTTON_VARIANT_CLASS, type ButtonVariant } from './tokens';
 
-export type ButtonVariant = 'primary' | 'secondary';
+export type { ButtonVariant };
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
 }
-
-const BASE_CLASS = `inline-flex items-center justify-center rounded-control px-6 font-semibold transition-colors ${MIN_TARGET} ${FOCUS_RING}`;
-
-const VARIANT_CLASS: Record<ButtonVariant, string> = {
-  primary: 'bg-brand-blue-700 text-white hover:bg-brand-blue-900',
-  secondary:
-    'border border-brand-blue-700 bg-transparent text-brand-blue-700 hover:bg-brand-blue-50',
-};
 
 const DISABLED_CLASS = 'opacity-50 cursor-not-allowed';
 
@@ -40,7 +32,12 @@ export function Button({
         }
         onClick?.(event);
       }}
-      className={[BASE_CLASS, VARIANT_CLASS[variant], disabled ? DISABLED_CLASS : '', className]
+      className={[
+        BUTTON_BASE_CLASS,
+        BUTTON_VARIANT_CLASS[variant],
+        disabled ? DISABLED_CLASS : '',
+        className,
+      ]
         .filter(Boolean)
         .join(' ')}
       {...props}

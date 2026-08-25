@@ -137,7 +137,16 @@ doit pas altérer l'historique.
 
 ## Fonctionnalités du MVP (§4)
 
-- **F1** — Inscription, connexion, profil mobilité (RGPD, suppression sous 30 j).
+- **F1** — Inscription, connexion, profil mobilité (RGPD, suppression de compte).
+  > ⚠️ **Précision vérifiée dans le code (Lot B, `docs/specs/web-geocoding-and-pages.md`).**
+  > Le dossier annonçait une suppression « sous 30 j » (délai légal maximal RGPD).
+  > `UserService.deleteAccount` (`apps/api/src/modules/user/user.service.ts`)
+  > l'exécute en réalité de façon **synchrone et immédiate** dans la requête
+  > `DELETE /users/me` : anonymisation e-mail/mot de passe, effacement du
+  > domicile/travail chiffrés et du consentement géoloc, suppression
+  > définitive de l'historique `carbon_log`. Aucune tâche planifiée, aucun
+  > délai d'attente. C'est _mieux_ que ce qu'annonçait la doc — `/confidentialite`
+  > décrit ce comportement réel.
 - **F2** — Planificateur multimodal géolocalisé (≥ 3 options, temps réel, < 3 s).
 - **F3** — Intégration APIs transport (OpenTripPlanner + GBFS + GTFS-RT, cache, mode dégradé).
 - **F4** — Calculateur d'empreinte carbone (fonctionnalité CLÉ) : `émissions(Trip)

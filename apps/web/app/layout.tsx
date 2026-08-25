@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { IBM_Plex_Mono, IBM_Plex_Sans } from 'next/font/google';
 import { AppHeader } from '../components/layout/app-header';
+import { Footer } from '../components/layout/footer';
 import { AuthProvider } from '../contexts/auth-context';
 import './globals.css';
 
@@ -52,6 +53,7 @@ export default function RootLayout({
           <div id="main-content" className="flex flex-1 flex-col">
             {children}
           </div>
+          <Footer />
         </AuthProvider>
       </body>
     </html>
