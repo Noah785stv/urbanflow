@@ -4,7 +4,15 @@ import type { Coordinates, PlannedJourney } from '@urbanflow/shared-types';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useEffect, useMemo } from 'react';
-import { MapContainer, Marker, Polyline, TileLayer, useMap, useMapEvents } from 'react-leaflet';
+import {
+  MapContainer,
+  Marker,
+  Polyline,
+  TileLayer,
+  ZoomControl,
+  useMap,
+  useMapEvents,
+} from 'react-leaflet';
 import { decodeSections } from '../../lib/decode-geometry';
 import { RENNES_CENTER } from '../../lib/geolocation';
 import { MODE_COLORS } from '../../lib/mode-labels';
@@ -91,6 +99,7 @@ export default function TripMap({
       center={[center.latitude, center.longitude]}
       zoom={13}
       scrollWheelZoom
+      zoomControl={false}
       className="h-full min-h-[320px] w-full rounded"
       aria-label="Carte de la métropole de Rennes — cliquez pour définir un point"
     >
@@ -98,6 +107,10 @@ export default function TripMap({
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
+      {/* Contrôle par défaut désactivé (`zoomControl={false}` ci-dessus) et
+          reposé ici avec des libellés français — Leaflet ne les traduit pas
+          nativement ("Zoom in"/"Zoom out"), incohérent avec `lang="fr"` (§C7). */}
+      <ZoomControl zoomInTitle="Zoomer" zoomOutTitle="Dézoomer" />
       <ClickHandler onMapClick={onMapClick} />
       {decodedSections.map((section, index) => (
         <Polyline
