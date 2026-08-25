@@ -37,11 +37,12 @@ describe('RecentLogs', () => {
     listCarbonLogs.mockReset();
   });
 
-  it('affiche les trajets confirmés avec leur décomposition par mode', async () => {
+  it('affiche les trajets confirmés avec leur décomposition par mode (ModeChip + distance)', async () => {
     listCarbonLogs.mockResolvedValueOnce(buildPage());
     render(<RecentLogs />);
 
-    expect(await screen.findByText(/Bus \(3.0 km\)/)).toBeInTheDocument();
+    expect(await screen.findByText('Bus')).toBeInTheDocument();
+    expect(screen.getByText('(3.0 km)')).toBeInTheDocument();
     expect(listCarbonLogs).toHaveBeenCalledWith(1, 10);
   });
 

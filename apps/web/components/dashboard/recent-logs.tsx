@@ -5,8 +5,10 @@ import { useEffect, useState } from 'react';
 import { ApiError } from '../../lib/api-client';
 import { listCarbonLogs } from '../../lib/carbon-api';
 import { formatCo2, formatDistance } from '../../lib/format';
-import { MODE_LABELS } from '../../lib/mode-labels';
-import { ERROR_TEXT_CLASS, SECONDARY_BUTTON_CLASS } from '../../lib/styles';
+import { MODE_COLORS, MODE_INITIALS, MODE_LABELS } from '../../lib/mode-labels';
+import { Button } from '../ui/button';
+import { Card } from '../ui/card';
+import { ModeChip } from '../ui/mode-chip';
 
 const PAGE_SIZE = 10;
 
@@ -53,33 +55,43 @@ export function RecentLogs() {
 
   return (
     <section aria-labelledby="recent-logs-heading" className="flex flex-col gap-3">
-      <h2 id="recent-logs-heading" className="text-lg font-bold text-zinc-900">
+      <h2
+        id="recent-logs-heading"
+        className="text-[20px] font-semibold leading-[26px] text-ink-900"
+      >
         Trajets récents
       </h2>
 
-      {errorMessage && <p className={ERROR_TEXT_CLASS}>{errorMessage}</p>}
+      {errorMessage && <p className="text-sm font-medium text-alert-600">{errorMessage}</p>}
 
       {data && data.items.length === 0 && (
-        <p className="text-sm text-zinc-700">Aucun trajet confirmé pour le moment.</p>
+        <p className="text-sm text-ink-600">Aucun trajet confirmé pour le moment.</p>
       )}
 
       {data && data.items.length > 0 && (
         <ol className="flex flex-col gap-3">
           {data.items.map((log) => (
-            <li key={log.id} className="rounded border border-zinc-300 bg-white p-3">
-              <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
-                <span className="font-semibold text-zinc-900">{formatLoggedAt(log.loggedAt)}</span>
-                <span className="text-zinc-700">
-                  {formatCo2(log.co2Grams)} · économie {formatCo2(log.savedGrams)}
-                </span>
-              </div>
-              <ul className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-sm text-zinc-700">
-                {log.modeBreakdown.map((entry) => (
-                  <li key={entry.mode}>
-                    {MODE_LABELS[entry.mode]} ({formatDistance(entry.distanceMeters)})
-                  </li>
-                ))}
-              </ul>
+            <li key={log.id}>
+              <Card>
+                <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+                  <span className="font-semibold text-ink-900">{formatLoggedAt(log.loggedAt)}</span>
+                  <span className="font-mono text-ink-600">
+                    {formatCo2(log.co2Grams)} · économie {formatCo2(log.savedGrams)}
+                  </span>
+                </div>
+                <ul className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-ink-600">
+                  {log.modeBreakdown.map((entry) => (
+                    <li key={entry.mode} className="flex items-center gap-1">
+                      <ModeChip
+                        color={MODE_COLORS[entry.mode]}
+                        initial={MODE_INITIALS[entry.mode]}
+                        label={MODE_LABELS[entry.mode]}
+                      />
+                      <span className="font-mono">({formatDistance(entry.distanceMeters)})</span>
+                    </li>
+                  ))}
+                </ul>
+              </Card>
             </li>
           ))}
         </ol>
@@ -87,25 +99,27 @@ export function RecentLogs() {
 
       {data && data.total > PAGE_SIZE && (
         <nav aria-label="Pagination des trajets récents" className="flex items-center gap-3">
-          <button
+          <Button
             type="button"
+            variant="secondary"
             onClick={() => setPage((current) => current - 1)}
             disabled={page <= 1}
-            className={`${SECONDARY_BUTTON_CLASS} text-sm`}
+            className="text-sm"
           >
             Précédent
-          </button>
-          <span className="text-sm text-zinc-700">
+          </Button>
+          <span className="text-sm text-ink-600">
             Page {page} / {totalPages}
           </span>
-          <button
+          <Button
             type="button"
+            variant="secondary"
             onClick={() => setPage((current) => current + 1)}
             disabled={page >= totalPages}
-            className={`${SECONDARY_BUTTON_CLASS} text-sm`}
+            className="text-sm"
           >
             Suivant
-          </button>
+          </Button>
         </nav>
       )}
     </section>

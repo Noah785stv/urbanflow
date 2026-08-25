@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 import { useAuth } from '../../contexts/auth-context';
 import { ApiError } from '../../lib/api-client';
-import { ERROR_TEXT_CLASS, INPUT_CLASS, LABEL_CLASS, PRIMARY_BUTTON_CLASS } from '../../lib/styles';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
 
 export function LoginForm() {
   const { login, isLoading } = useAuth();
@@ -33,53 +34,43 @@ export function LoginForm() {
       noValidate
       className="mx-auto flex w-full max-w-sm flex-col gap-4 p-6"
     >
-      <h1 className="text-2xl font-bold text-zinc-900">Connexion</h1>
+      <h1 className="text-[26px] font-semibold leading-[31px] text-ink-900">Connexion</h1>
 
-      <div className="flex flex-col gap-1">
-        <label htmlFor="login-email" className={LABEL_CLASS}>
-          E-mail
-        </label>
-        <input
-          id="login-email"
-          name="email"
-          type="email"
-          autoComplete="email"
-          required
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-          className={INPUT_CLASS}
-        />
-      </div>
+      <Input
+        id="login-email"
+        name="email"
+        type="email"
+        label="E-mail"
+        autoComplete="email"
+        required
+        value={email}
+        onChange={(event) => setEmail(event.target.value)}
+      />
 
-      <div className="flex flex-col gap-1">
-        <label htmlFor="login-password" className={LABEL_CLASS}>
-          Mot de passe
-        </label>
-        <input
-          id="login-password"
-          name="password"
-          type="password"
-          autoComplete="current-password"
-          required
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-          className={INPUT_CLASS}
-        />
-      </div>
+      <Input
+        id="login-password"
+        name="password"
+        type="password"
+        label="Mot de passe"
+        autoComplete="current-password"
+        required
+        value={password}
+        onChange={(event) => setPassword(event.target.value)}
+      />
 
       {error && (
-        <p role="alert" className={ERROR_TEXT_CLASS}>
+        <p role="alert" className="text-sm font-medium text-alert-600">
           {error}
         </p>
       )}
 
-      <button type="submit" disabled={isLoading} className={PRIMARY_BUTTON_CLASS}>
+      <Button type="submit" disabled={isLoading}>
         {isLoading ? 'Connexion en cours…' : 'Se connecter'}
-      </button>
+      </Button>
 
-      <p className="text-sm text-zinc-700">
+      <p className="text-[15px] leading-[24px] text-ink-600">
         Pas de compte ?{' '}
-        <Link href="/register" className="font-medium text-blue-700 underline">
+        <Link href="/register" className="font-medium text-brand-blue-700 underline">
           S’inscrire
         </Link>
       </p>

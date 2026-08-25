@@ -124,3 +124,45 @@ distanceMeters }` par tronçon via une fonction pure dédiée et testée
   récupère le PDF en `Blob` via la même logique d'auth/retry-on-401 que
   `apiRequest`, puis `lib/download-blob.ts` déclenche le téléchargement côté
   navigateur (`URL.createObjectURL`).
+
+## Design system (`docs/design-system.md`)
+
+Tokens (`app/globals.css` `@theme`, Tailwind 4 — pas de `tailwind.config.js`)
+et composants de base réutilisables (`components/ui/`) : `Button`, `Input`,
+`Card`, `ModeChip`, `RankingBadge`. Appliqués à tout `apps/web` (planificateur,
+tableau de bord, authentification, en-tête) ; `lib/styles.ts` — l'ancien
+système de classes ad hoc qu'ils remplacent — est supprimé, plus aucun écran
+ne le consomme.
+
+- **Tokens `brand-blue-*`/`brand-green-*`** : préfixés volontairement.
+  `blue`/`green` sont déjà des noms de palette Tailwind natifs ; les
+  redéclarer directement aurait re-teinté `bg-blue-700` etc. avant que la
+  propagation ne soit validée. Gardés tels quels après propagation complète :
+  renommer maintenant romprait tous les usages pour un gain nul, la doc
+  fait référence sous ce nom.
+- **Fonts** : IBM Plex Sans (400/600) + IBM Plex Mono (500) via `next/font`,
+  remplacent Geist globalement (inévitable — un seul `<html>` racine). Le
+  mono s'applique à toute donnée chiffrée (durée, CO₂, coût, distance,
+  nombre de trajets) partout dans l'app, conformément à la section 3.
+- **Couverture partielle des couleurs de mode (§2).** Seuls 4 `TransportMode`
+  sur 10 ont une couleur officielle (métro/bus/vélo/marche) — appliquée
+  exactement. Les 6 autres (VAE, trottinette, tram, TER, voiture solo,
+  covoiturage) gardent leurs couleurs F2-geometry existantes plutôt que des
+  teintes inventées qui auraient l'air sanctionnées par la doc.
+  `RankingBadge` a une variante `disruption` sans source de données
+  aujourd'hui (`JourneyLabel` n'a que fastest/greenest/cheapest) : construite,
+  non câblée.
+- **Focus visible (§5) : `ring-*`, pas `outline-*`.** Constaté en navigateur
+  réel : sur `<button>` (natif, `appearance: button` non réinitialisé par
+  Preflight Tailwind 4), `outline-color` en `:focus-visible` — testé sous
+  trois formes (`outline-black`, `var(--color-black)`, hex direct
+  `outline-[#000]`) — se réduit systématiquement à `currentColor`, alors que
+  le même utilitaire fonctionne correctement sur `<input>`. Cause exacte non
+  élucidée (probablement liée au rendu du widget natif du bouton) ;
+  contournée en utilisant `ring-[3px] ring-[#000] ring-offset-2`
+  (`box-shadow`, indépendant du rendu natif) pour tous les composants
+  `components/ui/*`, bouton et champ confondus. Vérifié en DOM réel
+  (`getComputedStyle`), pas seulement en test unitaire.
+- **`Button` désactivé = `aria-disabled`, pas l'attribut natif `disabled`**
+  (design-system.md §4) : reste focusable/repérable au clavier, le clic est
+  neutralisé côté composant.

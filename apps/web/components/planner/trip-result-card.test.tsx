@@ -61,11 +61,13 @@ describe('TripResultCard', () => {
     );
   });
 
-  it('décompose les sections avec mode, durée et distance', () => {
+  it('décompose les sections avec mode (ModeChip) puis durée et distance', () => {
     render(<TripResultCard journey={journey} isSelected={false} onSelect={vi.fn()} />);
 
-    expect(screen.getByText(/Marche \(5 min, 400 m\)/)).toBeInTheDocument();
-    expect(screen.getByText(/Bus \(11 min, 3.0 km\)/)).toBeInTheDocument();
+    expect(screen.getByText('Marche')).toBeInTheDocument();
+    expect(screen.getByText('(5 min, 400 m)')).toBeInTheDocument();
+    expect(screen.getByText('Bus')).toBeInTheDocument();
+    expect(screen.getByText('(11 min, 3.0 km)')).toBeInTheDocument();
   });
 
   it("n'affiche le bouton « Enregistrer ce trajet » que si l'option est sélectionnée (F4-web §6)", () => {
@@ -96,7 +98,7 @@ describe('TripResultCard', () => {
     expect(onConfirm).toHaveBeenCalledTimes(1);
   });
 
-  it('désactive le bouton et affiche « Enregistrement… » pendant la confirmation', () => {
+  it('désactive le bouton (aria-disabled, §4) et affiche « Enregistrement… » pendant la confirmation', () => {
     render(
       <TripResultCard
         journey={journey}
@@ -108,7 +110,7 @@ describe('TripResultCard', () => {
     );
 
     const button = screen.getByRole('button', { name: 'Enregistrement…' });
-    expect(button).toBeDisabled();
+    expect(button).toHaveAttribute('aria-disabled', 'true');
   });
 
   it('affiche la confirmation de succès et retire le bouton', () => {

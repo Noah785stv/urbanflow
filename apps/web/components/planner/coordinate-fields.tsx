@@ -2,7 +2,7 @@
 
 import type { Coordinates } from '@urbanflow/shared-types';
 import { useState } from 'react';
-import { INPUT_CLASS, LABEL_CLASS } from '../../lib/styles';
+import { Input } from '../ui/input';
 
 interface CoordinateFieldsProps {
   legend: string;
@@ -55,36 +55,32 @@ export function CoordinateFields({ legend, idPrefix, value, onChange }: Coordina
 
   return (
     <fieldset className="flex flex-col gap-2">
-      <legend className={LABEL_CLASS}>{legend}</legend>
+      <legend className="text-[13px] font-semibold uppercase tracking-[0.08em] leading-[18px] text-ink-900">
+        {legend}
+      </legend>
       <div className="flex gap-2">
-        <div className="flex flex-1 flex-col gap-1">
-          <label htmlFor={`${idPrefix}-lat`} className="text-sm text-zinc-700">
-            Latitude
-          </label>
-          <input
+        <div className="flex-1">
+          <Input
             id={`${idPrefix}-lat`}
+            label="Latitude"
             type="number"
             step="any"
             inputMode="decimal"
             value={latText}
             onChange={(event) => setLatText(event.target.value)}
             onBlur={() => commit(latText, lonText)}
-            className={INPUT_CLASS}
           />
         </div>
-        <div className="flex flex-1 flex-col gap-1">
-          <label htmlFor={`${idPrefix}-lon`} className="text-sm text-zinc-700">
-            Longitude
-          </label>
-          <input
+        <div className="flex-1">
+          <Input
             id={`${idPrefix}-lon`}
+            label="Longitude"
             type="number"
             step="any"
             inputMode="decimal"
             value={lonText}
             onChange={(event) => setLonText(event.target.value)}
             onBlur={() => commit(latText, lonText)}
-            className={INPUT_CLASS}
           />
         </div>
       </div>

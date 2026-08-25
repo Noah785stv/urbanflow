@@ -114,5 +114,8 @@ test('enregistrer un trajet depuis le planificateur -> il apparaît au tableau d
   const co2SummaryCard = page.locator('div').filter({ hasText: 'CO₂ cumulé (12 mois)' }).last();
   await expect(co2SummaryCard).toContainText('339 g CO2e');
 
-  await expect(page.getByText(/Bus \(3.0 km\)/)).toBeVisible();
+  // Mode + distance rendus dans un ModeChip séparé du span de données mono
+  // (design-system.md §2/§3) -- deux nœuds de texte distincts, pas un seul.
+  await expect(page.getByText('Bus')).toBeVisible();
+  await expect(page.getByText('(3.0 km)')).toBeVisible();
 });
