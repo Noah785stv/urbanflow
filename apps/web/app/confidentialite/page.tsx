@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { LegalPage, LegalSection } from '../../components/layout/legal-page';
 
 export const metadata: Metadata = {
@@ -71,6 +72,14 @@ export default function ConfidentialitePage() {
           l&rsquo;historique de vos bilans carbone est définitivement supprimé — le tout dans la
           même opération, sans délai d&rsquo;attente.
         </p>
+        <p>
+          Si vous estimez que l&rsquo;un de ces droits n&rsquo;est pas respecté, vous pouvez
+          introduire une réclamation auprès de la{' '}
+          <a href="https://www.cnil.fr" target="_blank" rel="noopener noreferrer">
+            CNIL
+          </a>{' '}
+          (Commission nationale de l&rsquo;informatique et des libertés), rubrique réclamations.
+        </p>
       </LegalSection>
 
       <LegalSection title="Sécurité">
@@ -82,6 +91,15 @@ export default function ConfidentialitePage() {
         </ul>
       </LegalSection>
 
+      <LegalSection title="Cookies et session">
+        <p>
+          Aucun cookie de suivi ou publicitaire n&rsquo;est déposé. La connexion est gérée par un
+          jeton conservé uniquement en mémoire dans votre navigateur (jamais dans un cookie, ni dans
+          le stockage local) : recharger ou fermer la page vous déconnecte, il n&rsquo;y a rien à
+          effacer de votre côté.
+        </p>
+      </LegalSection>
+
       <LegalSection title="Destinataires de vos données">
         <p>Vos données ne sont jamais transmises à des tiers à des fins commerciales.</p>
         <ul>
@@ -91,19 +109,33 @@ export default function ConfidentialitePage() {
             transmises, jamais votre identité.
           </li>
           <li>
-            La disponibilité des vélos/trottinettes partagés provient d&rsquo;un flux GBFS public,
-            consulté en lecture seule.
-          </li>
-          <li>
-            La recherche d&rsquo;adresse (saisie du départ/de l&rsquo;arrivée) interroge la
-            Géoplateforme de l&rsquo;IGN (service public français, sans clé d&rsquo;accès)
-            directement depuis votre navigateur — cette requête ne transite pas par nos serveurs et
-            ne contient aucune donnée de compte.
+            La recherche d&rsquo;adresse (saisie du départ/de l&rsquo;arrivée, ou clic sur la carte)
+            interroge la Géoplateforme de l&rsquo;IGN (service public français, sans clé
+            d&rsquo;accès) directement depuis votre navigateur. Le bouton « Utiliser ma position »
+            fait de même : votre position géographique réelle du moment est alors envoyée à
+            l&rsquo;IGN pour être traduite en adresse lisible (géocodage inversé). Ces requêtes ne
+            transitent jamais par nos serveurs et ne contiennent aucune donnée de compte.
           </li>
         </ul>
       </LegalSection>
 
-      <LegalSection title="Contact">
+      <LegalSection title="Hébergement et transferts hors Union européenne">
+        <p>
+          L&rsquo;interface de l&rsquo;application est hébergée par Vercel Inc., société américaine
+          : la desserte des pages peut impliquer un traitement de données techniques de connexion
+          (adresse IP, requêtes) en dehors de l&rsquo;Union européenne, via l&rsquo;infrastructure
+          d&rsquo;hébergement — ce n&rsquo;est pas un transfert délibéré de vos données de compte,
+          qui restent traitées par nos propres serveurs. Dans une mise en production réelle, un
+          hébergeur basé dans l&rsquo;Union européenne (par exemple Scaleway) serait retenu pour
+          écarter cette question, conformément aux choix d&rsquo;architecture du projet.
+        </p>
+      </LegalSection>
+
+      <LegalSection title="Responsable de traitement et contact">
+        <p>
+          Le responsable du traitement est l&rsquo;éditeur du service, identifié dans les{' '}
+          <Link href="/mentions-legales">mentions légales</Link>.
+        </p>
         <p>
           Pour toute question sur vos données :{' '}
           <a href="mailto:confidentialite@urbanflow-mobility.fr">
