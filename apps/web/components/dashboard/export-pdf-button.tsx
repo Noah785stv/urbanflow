@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { ApiError } from '../../lib/api-client';
 import { downloadMonthlyReport } from '../../lib/carbon-api';
 import { downloadBlob } from '../../lib/download-blob';
-import { ERROR_TEXT_CLASS, SECONDARY_BUTTON_CLASS } from '../../lib/styles';
+import { Button } from '../ui/button';
 
 interface ExportPdfButtonProps {
   /** Format `YYYY-MM`. */
@@ -33,19 +33,20 @@ export function ExportPdfButton({ month }: ExportPdfButtonProps) {
 
   return (
     <div className="flex flex-col items-start gap-1">
-      <button
+      <Button
         type="button"
+        variant="secondary"
         onClick={() => {
           void handleExport();
         }}
         disabled={status === 'pending'}
-        className={`${SECONDARY_BUTTON_CLASS} text-xs`}
+        className="text-sm"
         aria-label={`Exporter le bilan de ${month} en PDF`}
       >
         {status === 'pending' ? 'Export…' : 'Exporter (PDF)'}
-      </button>
+      </Button>
       {status === 'error' && errorMessage && (
-        <p className={`${ERROR_TEXT_CLASS} text-xs`}>{errorMessage}</p>
+        <p className="text-sm font-medium text-alert-600">{errorMessage}</p>
       )}
     </div>
   );

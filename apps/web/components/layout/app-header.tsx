@@ -3,9 +3,10 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../contexts/auth-context';
-import { FOCUS_RING, SECONDARY_BUTTON_CLASS } from '../../lib/styles';
+import { Button } from '../ui/button';
+import { FOCUS_RING } from '../ui/tokens';
 
-const NAV_LINK_CLASS = `rounded px-2 py-1 text-sm font-medium text-zinc-900 hover:bg-zinc-100 ${FOCUS_RING}`;
+const NAV_LINK_CLASS = `rounded px-2 py-1 text-sm font-medium text-ink-900 hover:bg-surface-50 ${FOCUS_RING}`;
 
 /** Navigation + déconnexion (§5.3, F4-web-dashboard §5.3), affichées uniquement une fois authentifié. */
 export function AppHeader() {
@@ -22,9 +23,9 @@ export function AppHeader() {
   }
 
   return (
-    <header className="flex items-center justify-between border-b border-zinc-300 bg-white px-4 py-3">
+    <header className="flex items-center justify-between border-b border-line-200 bg-surface-0 px-4 py-3">
       <div className="flex items-center gap-4">
-        <span className="font-semibold text-zinc-900">UrbanFlow Mobility</span>
+        <span className="font-semibold text-ink-900">UrbanFlow Mobility</span>
         <nav aria-label="Navigation principale" className="flex items-center gap-2">
           <Link href="/" className={NAV_LINK_CLASS}>
             Planifier
@@ -35,16 +36,17 @@ export function AppHeader() {
         </nav>
       </div>
       <div className="flex items-center gap-3">
-        {user && <span className="text-sm text-zinc-700">{user.email}</span>}
-        <button
+        {user && <span className="text-sm text-ink-600">{user.email}</span>}
+        <Button
           type="button"
+          variant="secondary"
           onClick={() => {
             void handleLogout();
           }}
-          className={SECONDARY_BUTTON_CLASS}
+          className="text-sm"
         >
           Se déconnecter
-        </button>
+        </Button>
       </div>
     </header>
   );
