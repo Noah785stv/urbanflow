@@ -17,7 +17,7 @@ export function RouteGuard({ children }: { children: ReactNode }) {
 
   if (!isAuthenticated) {
     return (
-      <p role="status" className="p-6 text-center text-zinc-700">
+      <p role="status" className="p-6 text-center text-ink-600">
         Redirection vers la connexion…
       </p>
     );

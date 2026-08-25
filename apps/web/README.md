@@ -125,22 +125,33 @@ distanceMeters }` par tronçon via une fonction pure dédiée et testée
   `apiRequest`, puis `lib/download-blob.ts` déclenche le téléchargement côté
   navigateur (`URL.createObjectURL`).
 
-## Design system — fondation (`docs/design-system.md`)
+## Design system (`docs/design-system.md`)
 
 Tokens (`app/globals.css` `@theme`, Tailwind 4 — pas de `tailwind.config.js`)
 et composants de base réutilisables (`components/ui/`) : `Button`, `Input`,
-`Card`, `ModeChip`, `RankingBadge`. **Appliqués pour l'instant uniquement à
-`/login`**, comme preuve de direction avant propagation aux autres écrans —
-qui continuent d'utiliser `lib/styles.ts` sans changement.
+`Card`, `ModeChip`, `RankingBadge`. Appliqués à tout `apps/web` (planificateur,
+tableau de bord, authentification, en-tête) ; `lib/styles.ts` — l'ancien
+système de classes ad hoc qu'ils remplacent — est supprimé, plus aucun écran
+ne le consomme.
 
 - **Tokens `brand-blue-*`/`brand-green-*`** : préfixés volontairement.
   `blue`/`green` sont déjà des noms de palette Tailwind natifs ; les
-  redéclarer directement aurait re-teinté tout usage existant de
-  `bg-blue-700` etc. ailleurs dans l'app avant que la propagation ne soit
-  décidée. Alignés sur la palette native (mêmes valeurs) au moment de la
-  propagation complète.
+  redéclarer directement aurait re-teinté `bg-blue-700` etc. avant que la
+  propagation ne soit validée. Gardés tels quels après propagation complète :
+  renommer maintenant romprait tous les usages pour un gain nul, la doc
+  fait référence sous ce nom.
 - **Fonts** : IBM Plex Sans (400/600) + IBM Plex Mono (500) via `next/font`,
-  remplacent Geist globalement (inévitable — un seul `<html>` racine).
+  remplacent Geist globalement (inévitable — un seul `<html>` racine). Le
+  mono s'applique à toute donnée chiffrée (durée, CO₂, coût, distance,
+  nombre de trajets) partout dans l'app, conformément à la section 3.
+- **Couverture partielle des couleurs de mode (§2).** Seuls 4 `TransportMode`
+  sur 10 ont une couleur officielle (métro/bus/vélo/marche) — appliquée
+  exactement. Les 6 autres (VAE, trottinette, tram, TER, voiture solo,
+  covoiturage) gardent leurs couleurs F2-geometry existantes plutôt que des
+  teintes inventées qui auraient l'air sanctionnées par la doc.
+  `RankingBadge` a une variante `disruption` sans source de données
+  aujourd'hui (`JourneyLabel` n'a que fastest/greenest/cheapest) : construite,
+  non câblée.
 - **Focus visible (§5) : `ring-*`, pas `outline-*`.** Constaté en navigateur
   réel : sur `<button>` (natif, `appearance: button` non réinitialisé par
   Preflight Tailwind 4), `outline-color` en `:focus-visible` — testé sous
