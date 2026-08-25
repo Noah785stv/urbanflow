@@ -96,6 +96,15 @@ A→B complet), `Segment` (portion sur un seul mode), `Mode` (moyen de transport
 - **Abstraction `TransportProvider`** : le module Integration est le SEUL point de
   contact avec les APIs externes (OpenTripPlanner, GTFS-RT, GBFS). Ajouter un opérateur =
   implémenter l'interface, sans toucher au cœur.
+  > ⚠️ **Périmètre précisé (F5, géocodage d'adresse).** Cet invariant vise les
+  > fournisseurs de données transport qu'`apps/api` met en cache et dégrade
+  > (OTP, GTFS-RT, GBFS) — il n'inclut pas le géocodage d'adresse
+  > (Géoplateforme IGN, `data.geopf.fr`), API publique et sans clé, appelée
+  > **directement depuis `apps/web`** à chaque frappe d'un champ
+  > `AddressAutocomplete` (debounce 300 ms, cf. `docs/specs/web-geocoding-and-pages.md`).
+  > La proxifier via le backend ajouterait une latence perceptible sur un
+  > pattern typeahead sans rien protéger (aucun secret à cacher). Voir
+  > `apps/web/README.md` (section géocodage).
 - **Versioning d'API** : toutes les routes sous `/api/v1/`.
 - **Multi-tenancy logique** : colonne `tenant_id` présente dès le MVP.
 - **Standards ouverts** : GTFS, GBFS, NeTEx, SIRI.

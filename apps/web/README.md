@@ -82,7 +82,44 @@ par défaut de Next.js 16. `dev`/`build` passent donc explicitement
 
 ### Hors périmètre de cette tranche (voir spec §2)
 
-Géocodage d'adresse (Nominatim), durcissement du stockage de jetons.
+Durcissement du stockage de jetons.
+
+### Géocodage d'adresse (Lot A, `docs/specs/web-geocoding-and-pages.md`)
+
+L'origine et la destination se saisissent en **adresse** (composant
+`AddressAutocomplete`), pas en coordonnées GPS — `lib/geocoding-api.ts`
+appelle la Géoplateforme IGN (`data.geopf.fr/geocodage`, Base Adresse
+Nationale, sans clé) directement depuis le navigateur.
+
+- **Pattern ARIA combobox** (`components/planner/address-autocomplete.tsx`) :
+  le focus DOM reste sur le champ texte, l'option survolée/naviguée au
+  clavier (↑ ↓ Entrée Échap) est seulement signalée via
+  `aria-activedescendant` — jamais un déplacement de focus réel, qui
+  casserait la frappe. Recherche debouncée (300 ms), seuil de 3 caractères,
+  `AbortController` pour annuler une requête devenue obsolète. Vérifié par
+  axe-core avec la liste de suggestions **ouverte** (l'état le plus à
+  risque), pas seulement au repos.
+- **Le texte affiché n'est jamais la source de vérité envoyée au backend.**
+  `POST /trips/plan` reçoit toujours `{ latitude, longitude }` — celles de
+  la suggestion effectivement sélectionnée. Un texte libre non résolu (pas
+  encore sélectionné) invalide la sélection précédente : impossible de
+  calculer un itinéraire sur une adresse tapée mais non choisie.
+- **Géoloc et clic carte inchangés dans leur mécanique**, mais désormais
+  accompagnés d'un **géocodage inversé** (`reverseGeocode`) pour afficher
+  une adresse lisible plutôt que des coordonnées brutes ; ces dernières
+  restent un repli visible pendant la résolution, ou si l'IGN ne renvoie
+  aucun résultat proche — jamais bloquant.
+- **Client HTTP dédié, pas `apiRequest`.** `lib/geocoding-api.ts` appelle un
+  hôte tiers public sans jeton Bearer ; réutiliser le client de
+  `apps/api` (Bearer + retry 401) n'aurait pas de sens ici.
+- **Point signalé (CLAUDE.md §5) : appel direct navigateur → IGN.**
+  L'invariant « le module Integration est le seul point de contact avec les
+  APIs externes » énumère explicitement OpenTripPlanner/GTFS-RT/GBFS — les
+  fournisseurs de données transport qu'`apps/api` doit mettre en cache et
+  dégrader. Le géocodage IGN en est hors périmètre : API publique sans clé,
+  appelée à chaque frappe (debounce 300 ms) — la proxifier via le backend
+  ajouterait une latence perceptible sur un pattern typeahead sans rien
+  protéger. Documenté explicitement plutôt que laissé implicite.
 
 ## Module Tableau de bord carbone (F4-web)
 
