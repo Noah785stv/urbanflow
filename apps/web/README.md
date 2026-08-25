@@ -162,6 +162,35 @@ distanceMeters }` par tronçon via une fonction pure dédiée et testée
   `apiRequest`, puis `lib/download-blob.ts` déclenche le téléchargement côté
   navigateur (`URL.createObjectURL`).
 
+## Pages statiques, footer & erreurs (Lot B, `docs/specs/web-geocoding-and-pages.md`)
+
+- **Footer** (`components/layout/footer.tsx`) posé dans `app/layout.tsx`, donc sur
+  **toutes** les pages y compris non authentifiées (contrairement à
+  `AppHeader`, qui ne s'affiche qu'une fois connecté) — et donc aussi
+  présent sur 404/erreur/403, qui restent rendues dans le layout racine.
+- **`/confidentialite`, `/mentions-legales`, `/a-propos`** : contenu
+  illustratif (service fictif) mais la politique de confidentialité décrit
+  le fonctionnement **réellement implémenté**, vérifié dans le code (pas
+  recopié depuis la spec) : bcrypt coût 12, chiffrement AES-256-GCM
+  applicatif de `mobility_profile.home/workLocationEncrypted`, consentement
+  géoloc explicite (opt-in, désactivé par défaut), minimisation du
+  `CarbonLog` (aucune origine/destination), suppression de compte
+  **immédiate** (voir CLAUDE.md §F1 — divergence positive avec le dossier,
+  qui annonçait un délai de 30 j).
+- **Pages d'erreur** : `app/not-found.tsx` (404), `app/error.tsx` (error
+  boundary générique, requiert `'use client'` côté Next.js), `app/403/page.tsx`.
+  Le 403 est construit et stylé mais **n'a pas de déclencheur réel
+  aujourd'hui** : `RouteGuard` ne vérifie que l'authentification, pas
+  `UserRole` — aucune route n'est restreinte par rôle dans l'app actuelle.
+  Prête pour un futur contrôle d'accès, pas câblée artificiellement pour
+  la forme (même traitement que la variante `disruption` de `RankingBadge`).
+- **`LinkButton`** (`components/ui/link-button.tsx`) : même apparence que
+  `Button`, mais un vrai lien (`next/link`) pour les retours à l'accueil
+  depuis les pages d'erreur — la logique de classes communes a été extraite
+  vers `components/ui/tokens.ts` (`BUTTON_BASE_CLASS`/`BUTTON_VARIANT_CLASS`)
+  pour que les deux composants restent visuellement identiques sans
+  dupliquer les styles.
+
 ## Design system (`docs/design-system.md`)
 
 Tokens (`app/globals.css` `@theme`, Tailwind 4 — pas de `tailwind.config.js`)
