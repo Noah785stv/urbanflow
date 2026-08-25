@@ -24,6 +24,7 @@ On remplace par une **saisie d'adresse avec autocomplétion**.
 
 ⚠️ **NE PAS utiliser `api-adresse.data.gouv.fr`** (décommissionné depuis janvier 2026).
 Endpoints à jour, sans clé :
+
 - **Recherche / autocomplétion** :
   `GET https://data.geopf.fr/geocodage/search/?q=<texte>&limit=5&autocomplete=1`
   → GeoJSON `FeatureCollection` ; chaque feature :
@@ -85,6 +86,7 @@ de marque brève. Accessible, responsive, conforme au design system.
 
 Vitrine de tout ton travail RGPD back-end. Doit refléter **fidèlement** ce que fait
 l'app :
+
 - **Données traitées** : e-mail, mot de passe (haché bcrypt), profil de mobilité,
   domicile/travail (**chiffrés AES-256**), géolocalisation (**avec consentement**),
   bilans carbone (**minimisés** : ni origine ni destination stockées).
