@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { API_BASE, loginViaUi, mockNetwork } from './helpers';
+import { API_BASE, fillAddress, loginViaUi, mockNetwork } from './helpers';
 
 const PLAN_RESPONSE = {
   journeys: [
@@ -73,15 +73,9 @@ test('connexion (clavier) -> calcul -> 3 options classées -> sélection au clav
   await expect(page).toHaveURL('/');
   await expect(page.getByRole('heading', { name: 'Planifier un trajet' })).toBeVisible();
 
-  // Origine/destination au clavier — chemin accessible sans carte ni souris (§11).
-  await page.locator('#origin-lat').fill('48.1173');
-  await page.locator('#origin-lat').blur();
-  await page.locator('#origin-lon').fill('-1.6778');
-  await page.locator('#origin-lon').blur();
-  await page.locator('#destination-lat').fill('48.1032');
-  await page.locator('#destination-lat').blur();
-  await page.locator('#destination-lon').fill('-1.6726');
-  await page.locator('#destination-lon').blur();
+  // Origine/destination par adresse — chemin accessible sans carte ni souris (§11, §A.3).
+  await fillAddress(page, 'Origine', 'Origine test');
+  await fillAddress(page, 'Destination', 'Destination test');
 
   const calculateButton = page.getByRole('button', { name: 'Calculer' });
   await expect(calculateButton).toBeEnabled();
@@ -125,12 +119,8 @@ test('mode dégradé : réponse stale et vide affichée sans jamais planter (§4
   await loginViaUi(page);
   await expect(page).toHaveURL('/');
 
-  await page.locator('#origin-lat').fill('48.1173');
-  await page.locator('#origin-lon').fill('-1.6778');
-  await page.locator('#origin-lon').blur();
-  await page.locator('#destination-lat').fill('48.1032');
-  await page.locator('#destination-lon').fill('-1.6726');
-  await page.locator('#destination-lon').blur();
+  await fillAddress(page, 'Origine', 'Origine test');
+  await fillAddress(page, 'Destination', 'Destination test');
 
   await page.getByRole('button', { name: 'Calculer' }).click();
 

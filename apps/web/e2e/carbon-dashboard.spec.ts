@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { API_BASE, loginViaUi, mockNetwork } from './helpers';
+import { API_BASE, fillAddress, loginViaUi, mockNetwork } from './helpers';
 
 const PLAN_RESPONSE = {
   journeys: [
@@ -63,12 +63,8 @@ test('enregistrer un trajet depuis le planificateur -> il apparaît au tableau d
   await loginViaUi(page);
   await expect(page).toHaveURL('/');
 
-  await page.locator('#origin-lat').fill('48.1173');
-  await page.locator('#origin-lon').fill('-1.6778');
-  await page.locator('#origin-lon').blur();
-  await page.locator('#destination-lat').fill('48.1032');
-  await page.locator('#destination-lon').fill('-1.6726');
-  await page.locator('#destination-lon').blur();
+  await fillAddress(page, 'Origine', 'Origine test');
+  await fillAddress(page, 'Destination', 'Destination test');
   await page.getByRole('button', { name: 'Calculer' }).click();
 
   await expect(page.getByRole('status')).toContainText('itinéraire');
