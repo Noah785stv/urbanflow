@@ -67,4 +67,78 @@ describe('TripResultCard', () => {
     expect(screen.getByText(/Marche \(5 min, 400 m\)/)).toBeInTheDocument();
     expect(screen.getByText(/Bus \(11 min, 3.0 km\)/)).toBeInTheDocument();
   });
+
+  it("n'affiche le bouton « Enregistrer ce trajet » que si l'option est sélectionnée (F4-web §6)", () => {
+    const { rerender } = render(
+      <TripResultCard
+        journey={journey}
+        isSelected={false}
+        onSelect={vi.fn()}
+        onConfirm={vi.fn()}
+      />,
+    );
+    expect(screen.queryByRole('button', { name: 'Enregistrer ce trajet' })).not.toBeInTheDocument();
+
+    rerender(
+      <TripResultCard journey={journey} isSelected onSelect={vi.fn()} onConfirm={vi.fn()} />,
+    );
+    expect(screen.getByRole('button', { name: 'Enregistrer ce trajet' })).toBeInTheDocument();
+  });
+
+  it('appelle onConfirm au clic', async () => {
+    const user = userEvent.setup();
+    const onConfirm = vi.fn();
+    render(
+      <TripResultCard journey={journey} isSelected onSelect={vi.fn()} onConfirm={onConfirm} />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Enregistrer ce trajet' }));
+    expect(onConfirm).toHaveBeenCalledTimes(1);
+  });
+
+  it('désactive le bouton et affiche « Enregistrement… » pendant la confirmation', () => {
+    render(
+      <TripResultCard
+        journey={journey}
+        isSelected
+        onSelect={vi.fn()}
+        onConfirm={vi.fn()}
+        confirmStatus="pending"
+      />,
+    );
+
+    const button = screen.getByRole('button', { name: 'Enregistrement…' });
+    expect(button).toBeDisabled();
+  });
+
+  it('affiche la confirmation de succès et retire le bouton', () => {
+    render(
+      <TripResultCard
+        journey={journey}
+        isSelected
+        onSelect={vi.fn()}
+        onConfirm={vi.fn()}
+        confirmStatus="success"
+      />,
+    );
+
+    expect(screen.getByRole('status')).toHaveTextContent('Trajet enregistré');
+    expect(screen.queryByRole('button', { name: 'Enregistrer ce trajet' })).not.toBeInTheDocument();
+  });
+
+  it("affiche le message d'erreur et laisse le bouton pour réessayer", () => {
+    render(
+      <TripResultCard
+        journey={journey}
+        isSelected
+        onSelect={vi.fn()}
+        onConfirm={vi.fn()}
+        confirmStatus="error"
+        confirmError="Enregistrement impossible pour le moment."
+      />,
+    );
+
+    expect(screen.getByText('Enregistrement impossible pour le moment.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Enregistrer ce trajet' })).toBeInTheDocument();
+  });
 });

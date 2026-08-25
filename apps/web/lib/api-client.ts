@@ -79,11 +79,11 @@ async function refreshAccessToken(): Promise<string | null> {
 }
 
 /**
- * Client HTTP unique (§9) : attache l'access token courant, retente une fois
- * via `refresh` sur 401, sinon laisse l'appelant (contexte d'auth) gérer la
- * redirection vers `/login`.
+ * Attache l'access token courant, retente une fois via `refresh` sur 401 —
+ * factorisé pour les deux formes de réponse consommées par l'app (JSON via
+ * `apiRequest`, binaire via `apiRequestBlob` pour le PDF, §4 F4-web-dashboard.md).
  */
-export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
+async function authenticatedRequest(path: string, options: RequestOptions): Promise<Response> {
   let response = await rawRequest(path, options, getTokens()?.accessToken);
 
   if (response.status === 401 && getTokens()) {
@@ -93,9 +93,35 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     }
   }
 
+  return response;
+}
+
+/**
+ * Client HTTP unique (§9) : attache l'access token courant, retente une fois
+ * via `refresh` sur 401, sinon laisse l'appelant (contexte d'auth) gérer la
+ * redirection vers `/login`.
+ */
+export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  const response = await authenticatedRequest(path, options);
+
   if (!response.ok) {
     throw toApiError(response.status, await parseJsonBody(response));
   }
 
   return (await parseJsonBody(response)) as T;
+}
+
+/**
+ * Variante binaire d'`apiRequest` (export PDF, §4 F4-web-dashboard.md) : un
+ * `<a href>` simple ne peut pas porter l'en-tête `Authorization`, il faut
+ * récupérer le blob authentifié puis déclencher le téléchargement côté client.
+ */
+export async function apiRequestBlob(path: string): Promise<Blob> {
+  const response = await authenticatedRequest(path, {});
+
+  if (!response.ok) {
+    throw toApiError(response.status, await parseJsonBody(response));
+  }
+
+  return response.blob();
 }

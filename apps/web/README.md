@@ -82,5 +82,45 @@ par défaut de Next.js 16. `dev`/`build` passent donc explicitement
 
 ### Hors périmètre de cette tranche (voir spec §2)
 
-Géocodage d'adresse (Nominatim), tableau de bord carbone/historique/export
-PDF (F4), durcissement du stockage de jetons.
+Géocodage d'adresse (Nominatim), durcissement du stockage de jetons.
+
+## Module Tableau de bord carbone (F4-web)
+
+Spec : `docs/specs/F4-web-dashboard.md`. Volet frontend de F4 (backend livré,
+`docs/specs/F4-carbon.md`) : rend la fonctionnalité clé **visible**.
+Réutilise le contexte d'auth et `apiRequest` de F2-web — **aucune nouvelle
+dépendance**.
+
+- Sur le planificateur, une option sélectionnée affiche « Enregistrer ce
+  trajet » (`POST /carbon-logs`). Le corps est réduit à `{ mode,
+distanceMeters }` par tronçon via une fonction pure dédiée et testée
+  isolément (`lib/to-confirm-trip-request.ts`) : `durationSeconds` et
+  `geometry` (présents sur `JourneySection`) sont explicitement retirés,
+  jamais transmis par un simple spread — l'API les rejette en 400
+  (`whitelist` stricte, F4-carbon.md §6).
+- `/dashboard` (protégée) : cartes de résumé (CO₂ cumulé, économies vs
+  voiture solo, nombre de trajets), historique mensuel, trajets récents
+  paginés, export PDF par mois.
+- **Types** : `CarbonLog`, `CarbonLogPage`, `CarbonLogSummary`,
+  `MonthlyCarbonBreakdown`, `ModeBreakdownEntry`, `ConfirmTripRequest`
+  réutilisés depuis `@urbanflow/shared-types`, jamais redéfinis.
+
+### Points clés
+
+- **Pas de librairie de graphique.** Le graphe mensuel (≤ 12 barres) est un
+  SVG écrit à la main plutôt qu'une dépendance comme `recharts` — la table
+  de données équivalente est de toute façon obligatoire pour
+  l'accessibilité (voir plus bas) et porte déjà 100 % de l'information ;
+  ajouter une librairie de charting pour 12 barres irait à l'encontre de la
+  sobriété déjà pratiquée sur ce projet (choix de la polyligne encodée en
+  F2-geometry).
+- **Accessibilité des graphes (§8).** Le SVG est décoratif (`aria-hidden`) :
+  la donnée réelle vit dans une `<table>` **toujours visible** juste en
+  dessous (mois/CO₂/économies/trajets), jamais une alternative masquée.
+  Aucune animation, donc rien à désactiver pour `prefers-reduced-motion`.
+  Vérifié par `axe-core` (0 violation critical/serious) sur `/dashboard`.
+- **Export PDF authentifié.** `GET /carbon-logs/report` exige le Bearer, donc
+  un `<a href>` classique ne suffit pas : `lib/api-client.ts#apiRequestBlob`
+  récupère le PDF en `Blob` via la même logique d'auth/retry-on-401 que
+  `apiRequest`, puis `lib/download-blob.ts` déclenche le téléchargement côté
+  navigateur (`URL.createObjectURL`).
