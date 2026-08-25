@@ -5,12 +5,13 @@ import dynamic from 'next/dynamic';
 import { useMemo, useState } from 'react';
 import { ApiError } from '../../lib/api-client';
 import { confirmTrip } from '../../lib/carbon-api';
+import { formatCoordinatesLabel, reverseGeocode } from '../../lib/geocoding-api';
 import { getCurrentPosition, RENNES_CENTER } from '../../lib/geolocation';
 import { readLastPlan, writeLastPlan } from '../../lib/last-plan-cache';
 import { toConfirmTripRequest } from '../../lib/to-confirm-trip-request';
 import { planTrip } from '../../lib/trip-api';
 import { Button } from '../ui/button';
-import { CoordinateFields } from './coordinate-fields';
+import { AddressAutocomplete } from './address-autocomplete';
 import type { ConfirmTripStatus } from './trip-result-card';
 import { TripResults } from './trip-results';
 
@@ -26,9 +27,29 @@ const TripMap = dynamic(() => import('./trip-map'), {
 type ClickTarget = 'origin' | 'destination';
 type GeoStatus = 'idle' | 'loading' | 'error';
 
+/**
+ * Résout une adresse lisible pour des coordonnées obtenues hors saisie
+ * (géoloc, clic carte) — jamais bloquant : l'appelant affiche déjà les
+ * coordonnées brutes en repli avant que cette résolution n'aboutisse, et en
+ * cas d'échec du géocodage inversé (réseau, ou IGN sans résultat proche).
+ */
+async function resolveAddressLabel(
+  coordinates: Coordinates,
+  setLabel: (label: string) => void,
+): Promise<void> {
+  try {
+    const label = await reverseGeocode(coordinates);
+    setLabel(label ?? formatCoordinatesLabel(coordinates));
+  } catch {
+    setLabel(formatCoordinatesLabel(coordinates));
+  }
+}
+
 export function TripPlanner() {
   const [origin, setOrigin] = useState<Coordinates | null>(null);
+  const [originLabel, setOriginLabel] = useState('');
   const [destination, setDestination] = useState<Coordinates | null>(null);
+  const [destinationLabel, setDestinationLabel] = useState('');
   const [accuracyMeters, setAccuracyMeters] = useState<number | null>(null);
   const [clickTarget, setClickTarget] = useState<ClickTarget>('origin');
   const [geoStatus, setGeoStatus] = useState<GeoStatus>('idle');
@@ -55,26 +76,40 @@ export function TripPlanner() {
     setGeoMessage(null);
     try {
       const position = await getCurrentPosition();
-      setOrigin({ latitude: position.latitude, longitude: position.longitude });
+      const coordinates = { latitude: position.latitude, longitude: position.longitude };
+      setOrigin(coordinates);
+      // Adresse lisible affichée dès que le géocodage inversé aboutit ;
+      // les coordonnées brutes servent de repli immédiat pendant la résolution.
+      setOriginLabel(formatCoordinatesLabel(coordinates));
       setAccuracyMeters(position.accuracyMeters);
       setClickTarget('destination');
       setGeoStatus('idle');
+      void resolveAddressLabel(coordinates, setOriginLabel);
     } catch (error) {
       setGeoStatus('error');
       setGeoMessage(error instanceof Error ? error.message : 'Géolocalisation indisponible.');
-      // Repli explicite (§6) : centre métropole, jamais imposé silencieusement.
-      setOrigin((current) => current ?? RENNES_CENTER);
       setAccuracyMeters(null);
+      // Repli explicite (§6) : centre métropole, jamais imposé silencieusement
+      // — uniquement si aucune origine n'était déjà posée.
+      if (!origin) {
+        setOrigin(RENNES_CENTER);
+        setOriginLabel(formatCoordinatesLabel(RENNES_CENTER));
+        void resolveAddressLabel(RENNES_CENTER, setOriginLabel);
+      }
     }
   }
 
   function handleMapClick(coordinates: Coordinates) {
     if (clickTarget === 'origin') {
       setOrigin(coordinates);
+      setOriginLabel(formatCoordinatesLabel(coordinates));
       setAccuracyMeters(null);
       setClickTarget('destination');
+      void resolveAddressLabel(coordinates, setOriginLabel);
     } else {
       setDestination(coordinates);
+      setDestinationLabel(formatCoordinatesLabel(coordinates));
+      void resolveAddressLabel(coordinates, setDestinationLabel);
     }
   }
 
@@ -190,20 +225,24 @@ export function TripPlanner() {
             </div>
           </fieldset>
 
-          <CoordinateFields
-            legend="Origine"
-            idPrefix="origin"
-            value={origin}
-            onChange={(coordinates) => {
+          <AddressAutocomplete
+            id="origin"
+            label="Origine"
+            addressLabel={originLabel}
+            onSelect={(coordinates, label) => {
               setOrigin(coordinates);
+              setOriginLabel(label);
               setAccuracyMeters(null);
             }}
           />
-          <CoordinateFields
-            legend="Destination"
-            idPrefix="destination"
-            value={destination}
-            onChange={setDestination}
+          <AddressAutocomplete
+            id="destination"
+            label="Destination"
+            addressLabel={destinationLabel}
+            onSelect={(coordinates, label) => {
+              setDestination(coordinates);
+              setDestinationLabel(label);
+            }}
           />
 
           {!canSubmit && !isPlanning && (
