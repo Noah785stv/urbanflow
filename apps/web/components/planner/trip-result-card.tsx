@@ -3,8 +3,11 @@
 import type { PlannedJourney } from '@urbanflow/shared-types';
 import { useId } from 'react';
 import { formatCo2, formatCost, formatDistance, formatDuration } from '../../lib/format';
-import { JOURNEY_LABEL_TEXT, MODE_LABELS } from '../../lib/mode-labels';
-import { ERROR_TEXT_CLASS, PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS } from '../../lib/styles';
+import { JOURNEY_LABEL_TEXT, MODE_COLORS, MODE_INITIALS, MODE_LABELS } from '../../lib/mode-labels';
+import { Button } from '../ui/button';
+import { Card } from '../ui/card';
+import { ModeChip } from '../ui/mode-chip';
+import { RankingBadge } from '../ui/ranking-badge';
 
 export type ConfirmTripStatus = 'idle' | 'pending' | 'success' | 'error';
 
@@ -33,83 +36,92 @@ export function TripResultCard({
   const summaryId = useId();
 
   return (
-    <li
-      className={`rounded border p-4 ${
-        isSelected ? 'border-blue-700 bg-blue-50' : 'border-zinc-300 bg-white'
-      }`}
-    >
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex flex-wrap gap-2">
-          {journey.labels.map((label) => (
-            <span
-              key={label}
-              className="rounded-full bg-blue-700 px-2 py-0.5 text-xs font-semibold text-white"
-            >
-              {JOURNEY_LABEL_TEXT[label]}
-            </span>
-          ))}
+    <li>
+      <Card selected={isSelected}>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex flex-wrap gap-2">
+            {journey.labels.map((label) => (
+              <RankingBadge key={label} variant={label}>
+                {JOURNEY_LABEL_TEXT[label]}
+              </RankingBadge>
+            ))}
+          </div>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={onSelect}
+            aria-pressed={isSelected}
+            aria-describedby={summaryId}
+            className="text-sm"
+          >
+            {isSelected ? '✓ Sélectionné' : 'Sélectionner'}
+          </Button>
         </div>
-        <button
-          type="button"
-          onClick={onSelect}
-          aria-pressed={isSelected}
-          aria-describedby={summaryId}
-          className={`${SECONDARY_BUTTON_CLASS} text-sm`}
-        >
-          {isSelected ? '✓ Sélectionné' : 'Sélectionner'}
-        </button>
-      </div>
 
-      <dl id={summaryId} className="mt-3 grid grid-cols-3 gap-2 text-sm">
-        <div>
-          <dt className="text-zinc-700">Durée</dt>
-          <dd className="font-semibold text-zinc-900">{formatDuration(journey.durationSeconds)}</dd>
-        </div>
-        <div>
-          <dt className="text-zinc-700">CO₂</dt>
-          <dd className="font-semibold text-zinc-900">{formatCo2(journey.co2Grams)}</dd>
-        </div>
-        <div>
-          <dt className="text-zinc-700">Coût</dt>
-          <dd className="font-semibold text-zinc-900">{formatCost(journey.estimatedCostCents)}</dd>
-        </div>
-      </dl>
+        <dl id={summaryId} className="mt-3 grid grid-cols-3 gap-2 text-sm">
+          <div>
+            <dt className="text-ink-600">Durée</dt>
+            <dd className="font-mono font-medium text-ink-900">
+              {formatDuration(journey.durationSeconds)}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-ink-600">CO₂</dt>
+            <dd className="font-mono font-medium text-ink-900">{formatCo2(journey.co2Grams)}</dd>
+          </div>
+          <div>
+            <dt className="text-ink-600">Coût</dt>
+            <dd className="font-mono font-medium text-ink-900">
+              {formatCost(journey.estimatedCostCents)}
+            </dd>
+          </div>
+        </dl>
 
-      <ol className="mt-3 flex flex-wrap items-center gap-x-1 gap-y-1 text-sm text-zinc-700">
-        {journey.sections.map((section, index) => (
-          <li key={`${section.mode}-${index}`} className="flex items-center gap-1">
-            {index > 0 && <span aria-hidden="true">→</span>}
-            <span>
-              {MODE_LABELS[section.mode]} ({formatDuration(section.durationSeconds)},{' '}
-              {formatDistance(section.distanceMeters)})
-            </span>
-          </li>
-        ))}
-      </ol>
-
-      {isSelected && onConfirm && (
-        <div className="mt-3 border-t border-zinc-200 pt-3">
-          {confirmStatus === 'success' ? (
-            <p role="status" className="text-sm font-medium text-green-700">
-              ✓ Trajet enregistré dans votre tableau de bord carbone.
-            </p>
-          ) : (
-            <>
-              <button
-                type="button"
-                onClick={onConfirm}
-                disabled={confirmStatus === 'pending'}
-                className={`${PRIMARY_BUTTON_CLASS} text-sm`}
-              >
-                {confirmStatus === 'pending' ? 'Enregistrement…' : 'Enregistrer ce trajet'}
-              </button>
-              {confirmStatus === 'error' && confirmError && (
-                <p className={`${ERROR_TEXT_CLASS} mt-2`}>{confirmError}</p>
+        <ol className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-ink-600">
+          {journey.sections.map((section, index) => (
+            <li key={`${section.mode}-${index}`} className="flex items-center gap-1">
+              {index > 0 && (
+                <span aria-hidden="true" className="mr-2">
+                  →
+                </span>
               )}
-            </>
-          )}
-        </div>
-      )}
+              <ModeChip
+                color={MODE_COLORS[section.mode]}
+                initial={MODE_INITIALS[section.mode]}
+                label={MODE_LABELS[section.mode]}
+              />
+              <span className="font-mono">
+                ({formatDuration(section.durationSeconds)}, {formatDistance(section.distanceMeters)}
+                )
+              </span>
+            </li>
+          ))}
+        </ol>
+
+        {isSelected && onConfirm && (
+          <div className="mt-3 border-t border-line-200 pt-3">
+            {confirmStatus === 'success' ? (
+              <p role="status" className="text-sm font-medium text-brand-green-700">
+                ✓ Trajet enregistré dans votre tableau de bord carbone.
+              </p>
+            ) : (
+              <>
+                <Button
+                  type="button"
+                  onClick={onConfirm}
+                  disabled={confirmStatus === 'pending'}
+                  className="text-sm"
+                >
+                  {confirmStatus === 'pending' ? 'Enregistrement…' : 'Enregistrer ce trajet'}
+                </Button>
+                {confirmStatus === 'error' && confirmError && (
+                  <p className="mt-2 text-sm font-medium text-alert-600">{confirmError}</p>
+                )}
+              </>
+            )}
+          </div>
+        )}
+      </Card>
     </li>
   );
 }

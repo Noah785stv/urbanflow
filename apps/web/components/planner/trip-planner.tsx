@@ -7,14 +7,9 @@ import { ApiError } from '../../lib/api-client';
 import { confirmTrip } from '../../lib/carbon-api';
 import { getCurrentPosition, RENNES_CENTER } from '../../lib/geolocation';
 import { readLastPlan, writeLastPlan } from '../../lib/last-plan-cache';
-import {
-  ERROR_TEXT_CLASS,
-  HINT_TEXT_CLASS,
-  PRIMARY_BUTTON_CLASS,
-  SECONDARY_BUTTON_CLASS,
-} from '../../lib/styles';
 import { toConfirmTripRequest } from '../../lib/to-confirm-trip-request';
 import { planTrip } from '../../lib/trip-api';
+import { Button } from '../ui/button';
 import { CoordinateFields } from './coordinate-fields';
 import type { ConfirmTripStatus } from './trip-result-card';
 import { TripResults } from './trip-results';
@@ -22,7 +17,7 @@ import { TripResults } from './trip-results';
 const TripMap = dynamic(() => import('./trip-map'), {
   ssr: false,
   loading: () => (
-    <div className="flex h-full min-h-[320px] w-full items-center justify-center rounded border border-zinc-300 bg-zinc-100 text-zinc-700">
+    <div className="flex h-full min-h-[320px] w-full items-center justify-center rounded border border-line-200 bg-surface-50 text-ink-600">
       Chargement de la carte…
     </div>
   ),
@@ -148,46 +143,50 @@ export function TripPlanner() {
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 p-4 md:p-6">
-      <h1 className="text-2xl font-bold text-zinc-900">Planifier un trajet</h1>
+      <h1 className="text-[26px] font-semibold leading-[31px] text-ink-900">Planifier un trajet</h1>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
           <div className="flex flex-wrap items-center gap-3">
-            <button
+            <Button
               type="button"
+              variant="secondary"
               onClick={() => {
                 void handleUseMyPosition();
               }}
               disabled={geoStatus === 'loading'}
-              className={SECONDARY_BUTTON_CLASS}
             >
               {geoStatus === 'loading' ? 'Localisation…' : 'Utiliser ma position'}
-            </button>
+            </Button>
             {accuracyMeters !== null && (
-              <span className={HINT_TEXT_CLASS}>Précision : ±{Math.round(accuracyMeters)} m</span>
+              <span className="text-sm text-ink-600">
+                Précision : ±{Math.round(accuracyMeters)} m
+              </span>
             )}
           </div>
-          {geoMessage && <p className={ERROR_TEXT_CLASS}>{geoMessage}</p>}
+          {geoMessage && <p className="text-sm font-medium text-alert-600">{geoMessage}</p>}
 
           <fieldset className="flex flex-col gap-1">
-            <legend className={HINT_TEXT_CLASS}>Clic sur la carte : définir…</legend>
+            <legend className="text-sm text-ink-600">Clic sur la carte : définir…</legend>
             <div className="flex gap-2" role="radiogroup" aria-label="Cible du clic sur la carte">
-              <button
+              <Button
                 type="button"
+                variant="secondary"
                 aria-pressed={clickTarget === 'origin'}
                 onClick={() => setClickTarget('origin')}
-                className={`${SECONDARY_BUTTON_CLASS} text-sm ${clickTarget === 'origin' ? 'border-blue-700 bg-blue-50' : ''}`}
+                className={`text-sm ${clickTarget === 'origin' ? 'border-brand-blue-700 bg-brand-blue-50' : ''}`}
               >
                 Origine
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                variant="secondary"
                 aria-pressed={clickTarget === 'destination'}
                 onClick={() => setClickTarget('destination')}
-                className={`${SECONDARY_BUTTON_CLASS} text-sm ${clickTarget === 'destination' ? 'border-blue-700 bg-blue-50' : ''}`}
+                className={`text-sm ${clickTarget === 'destination' ? 'border-brand-blue-700 bg-brand-blue-50' : ''}`}
               >
                 Destination
-              </button>
+              </Button>
             </div>
           </fieldset>
 
@@ -208,21 +207,20 @@ export function TripPlanner() {
           />
 
           {!canSubmit && !isPlanning && (
-            <p id="calculate-hint" className={HINT_TEXT_CLASS}>
+            <p id="calculate-hint" className="text-sm text-ink-600">
               Renseignez une origine et une destination pour calculer un itinéraire.
             </p>
           )}
 
-          <button
+          <Button
             type="submit"
             disabled={!canSubmit}
             aria-describedby={!canSubmit ? 'calculate-hint' : undefined}
-            className={PRIMARY_BUTTON_CLASS}
           >
             {isPlanning ? 'Calcul en cours…' : 'Calculer'}
-          </button>
+          </Button>
 
-          {planError && <p className={ERROR_TEXT_CLASS}>{planError}</p>}
+          {planError && <p className="text-sm font-medium text-alert-600">{planError}</p>}
           {isOffline && (
             <p className="text-sm text-amber-900">
               Hors-ligne : affichage du dernier trajet calculé avec succès.

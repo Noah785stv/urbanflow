@@ -37,11 +37,11 @@ export function TripResults({
 }: TripResultsProps) {
   return (
     <section aria-labelledby="results-heading" className="flex flex-col gap-3">
-      <h2 id="results-heading" className="text-lg font-bold text-zinc-900">
+      <h2 id="results-heading" className="text-[20px] font-semibold leading-[26px] text-ink-900">
         Itinéraires
       </h2>
 
-      <p role="status" className="text-sm text-zinc-700">
+      <p role="status" className="text-sm text-ink-600">
         {announcementFor(journeys, stale)}
       </p>
 

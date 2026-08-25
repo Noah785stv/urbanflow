@@ -18,8 +18,11 @@ function createPinIcon(color: string, label: string): L.DivIcon {
   });
 }
 
-const originIcon = createPinIcon('#1d4ed8', 'Origine');
-const destinationIcon = createPinIcon('#b91c1c', 'Destination');
+// Couleurs alignées sur les tokens du design system (§1) : brand-blue-700
+// (#0B4F9E) et alert-600 (#B3261E) — pas de classe Tailwind possible ici,
+// L.divIcon génère du HTML brut hors de l'arbre React.
+const originIcon = createPinIcon('#0B4F9E', 'Origine');
+const destinationIcon = createPinIcon('#B3261E', 'Destination');
 
 interface ClickHandlerProps {
   onMapClick: (coordinates: Coordinates) => void;
