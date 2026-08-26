@@ -48,10 +48,28 @@ test.describe('Accessibilité — axe-core (§14 : 0 violation critical/serious)
     expect(seriousOrCritical(results)).toEqual([]);
   });
 
-  test('planificateur (authentifié)', async ({ page }) => {
+  test('planificateur (authentifié) — carte non sollicitée, placeholder affiché', async ({
+    page,
+  }) => {
     await mockNetwork(page);
     await loginViaUi(page);
     await expect(page).toHaveURL('/');
+
+    // Depuis §C5 (chargement différé), c'est le placeholder qu'on couvre ici
+    // par défaut -- voir le test suivant pour la carte réellement montée.
+    await expect(page.getByRole('button', { name: 'Afficher la carte' })).toBeVisible();
+
+    const results = await new AxeBuilder({ page }).analyze();
+    expect(seriousOrCritical(results)).toEqual([]);
+  });
+
+  test('planificateur — carte affichée (§C5)', async ({ page }) => {
+    await mockNetwork(page);
+    await loginViaUi(page);
+    await expect(page).toHaveURL('/');
+
+    await page.getByRole('button', { name: 'Afficher la carte' }).click();
+    await expect(page.locator('.leaflet-container')).toBeVisible();
 
     const results = await new AxeBuilder({ page }).analyze();
     expect(seriousOrCritical(results)).toEqual([]);

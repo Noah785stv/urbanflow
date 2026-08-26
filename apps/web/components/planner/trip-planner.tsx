@@ -12,6 +12,7 @@ import { toConfirmTripRequest } from '../../lib/to-confirm-trip-request';
 import { planTrip } from '../../lib/trip-api';
 import { Button } from '../ui/button';
 import { AddressAutocomplete } from './address-autocomplete';
+import { MapPlaceholder } from './map-placeholder';
 import type { ConfirmTripStatus } from './trip-result-card';
 import { TripResults } from './trip-results';
 
@@ -64,6 +65,13 @@ export function TripPlanner() {
 
   const [confirmStatus, setConfirmStatus] = useState<ConfirmTripStatus>('idle');
   const [confirmError, setConfirmError] = useState<string | null>(null);
+
+  // §C5 (éco-conception) : la carte (chunk Leaflet + tuiles OSM) ne se
+  // monte qu'au premier besoin réel -- jamais remis à `false` une fois monté.
+  const [mapRequested, setMapRequested] = useState(false);
+  function requestMap() {
+    setMapRequested(true);
+  }
 
   function handleSelect(index: number) {
     setSelectedIndex(index);
@@ -229,6 +237,7 @@ export function TripPlanner() {
             id="origin"
             label="Origine"
             addressLabel={originLabel}
+            onFocus={requestMap}
             onSelect={(coordinates, label) => {
               setOrigin(coordinates);
               setOriginLabel(label);
@@ -239,6 +248,7 @@ export function TripPlanner() {
             id="destination"
             label="Destination"
             addressLabel={destinationLabel}
+            onFocus={requestMap}
             onSelect={(coordinates, label) => {
               setDestination(coordinates);
               setDestinationLabel(label);
@@ -267,12 +277,16 @@ export function TripPlanner() {
           )}
 
           <div className="h-80 md:h-[28rem]">
-            <TripMap
-              origin={origin}
-              destination={destination}
-              onMapClick={handleMapClick}
-              selectedJourney={selectedJourney}
-            />
+            {mapRequested ? (
+              <TripMap
+                origin={origin}
+                destination={destination}
+                onMapClick={handleMapClick}
+                selectedJourney={selectedJourney}
+              />
+            ) : (
+              <MapPlaceholder onShow={requestMap} />
+            )}
           </div>
         </form>
 

@@ -132,4 +132,22 @@ describe('AddressAutocomplete', () => {
 
     expect(screen.getByRole('combobox', { name: 'Origine' })).toHaveValue('48.10320, -1.67260');
   });
+
+  it('appelle `onFocus` à la prise de focus du champ (§C5 : signal de montage de la carte)', async () => {
+    const onFocus = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <AddressAutocomplete
+        id="origin"
+        label="Origine"
+        addressLabel=""
+        onSelect={vi.fn()}
+        onFocus={onFocus}
+      />,
+    );
+
+    await user.click(screen.getByRole('combobox', { name: 'Origine' }));
+
+    expect(onFocus).toHaveBeenCalledTimes(1);
+  });
 });

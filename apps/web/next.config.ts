@@ -1,4 +1,5 @@
 import { fileURLToPath } from 'node:url';
+import withBundleAnalyzerInit from '@next/bundle-analyzer';
 import withSerwistInit from '@serwist/next';
 import type { NextConfig } from 'next';
 
@@ -22,4 +23,12 @@ const withSerwist = withSerwistInit({
   disable: process.env.NODE_ENV === 'development',
 });
 
-export default withSerwist(nextConfig);
+// Mesure ponctuelle (§C5, passe éco-conception) : `ANALYZE=true pnpm build`
+// ouvre un rapport visuel du bundle client. Désactivé par défaut, aucun
+// effet sur `dev`/`build` normaux.
+const withBundleAnalyzer = withBundleAnalyzerInit({
+  enabled: process.env.ANALYZE === 'true',
+  openAnalyzer: false,
+});
+
+export default withBundleAnalyzer(withSerwist(nextConfig));

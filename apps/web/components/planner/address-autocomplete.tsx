@@ -15,6 +15,8 @@ interface AddressAutocompleteProps {
   addressLabel: string;
   /** `coordinates` vaut `null` tant que le texte affiché ne correspond pas à une suggestion choisie. */
   onSelect: (coordinates: Coordinates | null, label: string) => void;
+  /** Déclenché à chaque prise de focus du champ (§C5 : sert de signal « la carte va être utile »). */
+  onFocus?: () => void;
 }
 
 function resultsAnnouncement(status: 'idle' | 'loading' | 'error', count: number): string {
@@ -44,6 +46,7 @@ export function AddressAutocomplete({
   label,
   addressLabel,
   onSelect,
+  onFocus,
 }: AddressAutocompleteProps) {
   const [text, setText] = useState(addressLabel);
   const [previousAddressLabel, setPreviousAddressLabel] = useState(addressLabel);
@@ -169,6 +172,7 @@ export function AddressAutocomplete({
         onKeyDown={handleKeyDown}
         onBlur={() => setIsOpen(false)}
         onFocus={() => {
+          onFocus?.();
           if (suggestions.length > 0) {
             setIsOpen(true);
           }
