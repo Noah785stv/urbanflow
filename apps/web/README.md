@@ -240,6 +240,44 @@ zoomInTitle="Zoomer" zoomOutTitle="Dézoomer" />`).
   `lang="fr"` global, titres de page uniques, labels de formulaire tous
   câblés via `Input`.
 
+## Passe éco-conception (C5)
+
+`ANALYZE=true pnpm --filter web build` active `@next/bundle-analyzer`
+(`next.config.ts`, `openAnalyzer: false`, aucun effet sur `dev`/`build`
+normaux) — a servi à mesurer, pas à deviner, le seul levier EcoIndex retenu :
+
+- **Chargement différé de la carte** (`components/planner/map-placeholder.tsx`).
+  La carte (chunk Leaflet + tuiles OSM) chargeait auparavant dès l'affichage
+  du planificateur, avant toute interaction — mesuré : 9 requêtes de tuiles
+  sur les 53 premières requêtes de la page. Elle est désormais remplacée par
+  un placeholder (bouton « Afficher la carte », même gabarit, aucun saut de
+  mise en page) tant que rien ne l'a sollicitée. Se monte au premier de :
+  activation du placeholder, **ou** prise de focus d'un des deux champs
+  `AddressAutocomplete` (nouvelle prop `onFocus`, additive — n'affecte aucun
+  test existant) ; reste monté ensuite pour le reste de la session. Mesuré
+  avant/après (script Playwright ponctuel, non conservé) sur `/` juste après
+  connexion : **115 → 82 nœuds DOM, 53 → 17 requêtes, 9 → 0 tuiles**.
+  - Le parcours clic-sur-la-carte reste inchangé une fois affichée (mêmes
+    props/handlers que `<TripMap>` avant ce changement).
+  - `e2e/map-lazy-load.spec.ts` (nouveau) : preuve réseau (pas seulement
+    DOM) que zéro requête de tuile ne part avant sollicitation, montage via
+    le placeholder et via le focus d'un champ, persistance, et clic-carte
+    intact une fois affichée.
+  - `e2e/a11y.spec.ts` : le test planificateur historique couvre désormais
+    le placeholder (lui-même vérifié accessible) ; un nouveau test couvre la
+    carte réellement montée, pour ne perdre aucune couverture axe-core.
+- **Fonts et images déjà optimales, vérifié dans le code du paquet (pas
+  deviné)** : `next/font/google` a `display: 'swap'`, `preload: true` et
+  `adjustFontFallback: true` par défaut ; `subsets: ['latin']` déjà posé
+  explicitement. `public/` ne contient aucune image raster — rien à
+  convertir vers `next/image`.
+- **Ménage** : les 5 SVG de scaffold Next.js jamais utilisés (`file.svg`,
+  `globe.svg`, `next.svg`, `vercel.svg`, `window.svg`) ont été supprimés,
+  confirmé sans référence dans le code au préalable.
+- **Framework tax, non actionnable** : les postes les plus lourds du bundle
+  (runtime App Router, React/react-dom) sont à ~95 % du code Next.js/React
+  lui-même, pas du code applicatif — hors périmètre d'une passe présentation.
+
 ## Design system (`docs/design-system.md`)
 
 Tokens (`app/globals.css` `@theme`, Tailwind 4 — pas de `tailwind.config.js`)
