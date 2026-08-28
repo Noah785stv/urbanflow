@@ -26,9 +26,7 @@
                       },
                       "additionalProperties": {
                         "type": "object",
-                        "required": [
-                          "status"
-                        ],
+                        "required": ["status"],
                         "properties": {
                           "status": {
                             "type": "string"
@@ -43,9 +41,7 @@
                       "example": {},
                       "additionalProperties": {
                         "type": "object",
-                        "required": [
-                          "status"
-                        ],
+                        "required": ["status"],
                         "properties": {
                           "status": {
                             "type": "string"
@@ -64,9 +60,7 @@
                       },
                       "additionalProperties": {
                         "type": "object",
-                        "required": [
-                          "status"
-                        ],
+                        "required": ["status"],
                         "properties": {
                           "status": {
                             "type": "string"
@@ -100,9 +94,7 @@
                       },
                       "additionalProperties": {
                         "type": "object",
-                        "required": [
-                          "status"
-                        ],
+                        "required": ["status"],
                         "properties": {
                           "status": {
                             "type": "string"
@@ -122,9 +114,7 @@
                       },
                       "additionalProperties": {
                         "type": "object",
-                        "required": [
-                          "status"
-                        ],
+                        "required": ["status"],
                         "properties": {
                           "status": {
                             "type": "string"
@@ -147,9 +137,7 @@
                       },
                       "additionalProperties": {
                         "type": "object",
-                        "required": [
-                          "status"
-                        ],
+                        "required": ["status"],
                         "properties": {
                           "status": {
                             "type": "string"
@@ -164,9 +152,7 @@
             }
           }
         },
-        "tags": [
-          "health"
-        ]
+        "tags": ["health"]
       }
     },
     "/auth/register": {
@@ -188,9 +174,7 @@
             "description": ""
           }
         },
-        "tags": [
-          "auth"
-        ]
+        "tags": ["auth"]
       }
     },
     "/auth/verify-email": {
@@ -212,9 +196,7 @@
             "description": ""
           }
         },
-        "tags": [
-          "auth"
-        ]
+        "tags": ["auth"]
       }
     },
     "/auth/login": {
@@ -236,9 +218,7 @@
             "description": ""
           }
         },
-        "tags": [
-          "auth"
-        ]
+        "tags": ["auth"]
       }
     },
     "/auth/refresh": {
@@ -255,9 +235,7 @@
             "access-token": []
           }
         ],
-        "tags": [
-          "auth"
-        ]
+        "tags": ["auth"]
       }
     },
     "/auth/logout": {
@@ -274,9 +252,7 @@
             "access-token": []
           }
         ],
-        "tags": [
-          "auth"
-        ]
+        "tags": ["auth"]
       }
     },
     "/users/me": {
@@ -293,9 +269,7 @@
             "access-token": []
           }
         ],
-        "tags": [
-          "users"
-        ]
+        "tags": ["users"]
       },
       "patch": {
         "operationId": "UserController_updateMe",
@@ -320,9 +294,7 @@
             "access-token": []
           }
         ],
-        "tags": [
-          "users"
-        ]
+        "tags": ["users"]
       },
       "delete": {
         "operationId": "UserController_deleteMe",
@@ -337,9 +309,7 @@
             "access-token": []
           }
         ],
-        "tags": [
-          "users"
-        ]
+        "tags": ["users"]
       }
     },
     "/carbon-logs": {
@@ -366,9 +336,7 @@
             "access-token": []
           }
         ],
-        "tags": [
-          "carbon-logs"
-        ]
+        "tags": ["carbon-logs"]
       },
       "get": {
         "operationId": "CarbonLogController_list",
@@ -383,9 +351,7 @@
             "access-token": []
           }
         ],
-        "tags": [
-          "carbon-logs"
-        ]
+        "tags": ["carbon-logs"]
       }
     },
     "/carbon-logs/summary": {
@@ -402,9 +368,7 @@
             "access-token": []
           }
         ],
-        "tags": [
-          "carbon-logs"
-        ]
+        "tags": ["carbon-logs"]
       }
     },
     "/carbon-logs/report": {
@@ -421,9 +385,7 @@
             "access-token": []
           }
         ],
-        "tags": [
-          "carbon-logs"
-        ]
+        "tags": ["carbon-logs"]
       }
     },
     "/trips/plan": {
@@ -450,9 +412,7 @@
             "access-token": []
           }
         ],
-        "tags": [
-          "trips"
-        ]
+        "tags": ["trips"]
       }
     },
     "/stations/nearby": {
@@ -469,9 +429,7 @@
             "access-token": []
           }
         ],
-        "tags": [
-          "stations"
-        ]
+        "tags": ["stations"]
       }
     },
     "/stops/{id}/departures": {
@@ -497,9 +455,7 @@
             "access-token": []
           }
         ],
-        "tags": [
-          "stops"
-        ]
+        "tags": ["stops"]
       }
     }
   },
