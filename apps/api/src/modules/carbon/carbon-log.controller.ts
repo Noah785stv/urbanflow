@@ -8,6 +8,7 @@ import {
   StreamableFile,
   UseGuards,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AccessTokenPayload } from '../auth/types/access-token-payload.interface';
@@ -23,6 +24,8 @@ import { MonthlyReportQueryDto } from './dto/monthly-report-query.dto';
  * route : un utilisateur ne peut structurellement lire/confirmer que ses
  * propres trajets (§9, §5.7 A01).
  */
+@ApiTags('carbon-logs')
+@ApiBearerAuth('access-token')
 @UseGuards(JwtAuthGuard)
 @Controller('carbon-logs')
 export class CarbonLogController {

@@ -8,6 +8,7 @@ import {
   Patch,
   UseGuards,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AccessTokenPayload } from '../auth/types/access-token-payload.interface';
@@ -19,6 +20,8 @@ import { UserService } from './user.service';
  * du JWT (`user.sub`), jamais d'un paramètre de route : un utilisateur ne
  * peut structurellement pas accéder au profil d'un autre (§5.7 A01).
  */
+@ApiTags('users')
+@ApiBearerAuth('access-token')
 @UseGuards(JwtAuthGuard)
 @Controller('users')
 export class UserController {
