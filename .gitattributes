@@ -1,0 +1,19 @@
+# Normalise les fins de ligne en LF pour tout fichier texte, quel que soit
+# le paramètre `core.autocrlf` de la machine qui checkout — source du
+# faux-positif récurrent de `prettier --check` en local sur Windows cette
+# session (des dizaines de fichiers jamais touchés remontaient en échec,
+# alors que CI, sans autocrlf, les voyait déjà propres).
+* text=auto eol=lf
+
+# Binaires réels du dépôt — jamais de conversion de fin de ligne (les
+# extensions au-delà de favicon.ico sont une marge de sécurité).
+*.ico binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary
+*.pdf binary
