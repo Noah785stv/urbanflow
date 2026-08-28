@@ -6,6 +6,7 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { CurrentUser } from './decorators/current-user.decorator';
@@ -17,6 +18,7 @@ import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
 import { AccessTokenPayload } from './types/access-token-payload.interface';
 
 /** Contrôleur Auth (§6) — inscription, connexion, rafraîchissement, déconnexion. */
+@ApiTags('auth')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
@@ -42,6 +44,7 @@ export class AuthController {
     return this.authService.login(dto);
   }
 
+  @ApiBearerAuth('access-token')
   @UseGuards(JwtRefreshGuard)
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
@@ -49,6 +52,7 @@ export class AuthController {
     return this.authService.issueAccessToken(user.sub);
   }
 
+  @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard)
   @Post('logout')
   @HttpCode(HttpStatus.NO_CONTENT)

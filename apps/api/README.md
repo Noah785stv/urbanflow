@@ -145,12 +145,44 @@ modes OTP (`OTP_MODE_MAP`) est une approximation limitée aux modes présents
 sur le réseau STAR ; tout mode non couvert (avion, ferry, taxi...) retombe
 sur `Bus`, avec un avertissement journalisé.
 
-### OpenAPI
+### OpenAPI (interop C9)
 
-Non généré automatiquement pour cet incrément (pas de `@nestjs/swagger` dans
-les dépendances approuvées — voir `docs/specs/F1-auth.md` §8). Les tableaux
-ci-dessus font référence tant qu'une génération OpenAPI n'est pas mise en
-place.
+`@nestjs/swagger` génère la doc à partir des contrôleurs/DTO existants —
+aucun changement de contrat, aucune route cassée.
+
+- **UI interactive** : `GET /api/docs` (dev comme prod). **JSON brut** :
+  `GET /api/docs-json`.
+- **Export fichier** (annexe dossier) : `pnpm --filter @urbanflow/api
+openapi:export` écrit `apps/api/openapi.json` à partir de la **même**
+  construction de document que l'UI (`src/config/swagger.config.ts`) — les
+  deux ne peuvent jamais diverger. Nécessite Postgres/Redis démarrés (même
+  contexte Nest complet qu'au démarrage normal), aucun serveur HTTP n'écoute
+  pendant l'export. À régénérer avant toute PR qui change la surface de
+  l'API.
+- **Décorateurs minimaux** : `@ApiTags` par contrôleur (un par module :
+  `auth`, `users`, `trips`, `carbon-logs`, `stations`, `stops`, `health`) et
+  `@ApiBearerAuth('access-token')` sur les routes protégées. Les schémas de
+  DTO sont inférés automatiquement par le plugin CLI `@nestjs/swagger`
+  (`nest-cli.json` → `compilerOptions.plugins`), pas par des `@ApiProperty`
+  posés à la main sur chaque champ.
+- **`@nestjs/swagger` figé en 11.x, pas 12.x.** La version 12 (dernière au
+  moment de l'intégration) publie un `dist/index.js` en syntaxe ESM
+  (`import` en tête de fichier CommonJS) — Jest, qui ne transforme pas
+  `node_modules` par défaut, échoue immédiatement sur
+  `SyntaxError: Cannot use import statement outside a module` dès qu'un
+  contrôleur importe `@ApiTags`. `11.4.7` (dernière version majeure alignée
+  sur le reste de l'écosystème Nest 11 du projet) est un CJS classique,
+  sans ce problème — confirmé : 147 tests unitaires + 37 e2e toujours verts.
+- **CSP relâchée uniquement sur `/api/docs`, jamais globalement**
+  (`main.ts`). La CSP par défaut d'Helmet (`script-src 'self'`, pas de style
+  inline) bloque le script d'amorçage inline de Swagger UI
+  (`SwaggerUIBundle({...})`) et ses styles inline — la page resterait
+  blanche sans assouplissement ciblé. Vérifié en conditions réelles :
+  `curl -I /api/docs` renvoie `script-src 'self' 'unsafe-inline'`, tandis
+  que n'importe quelle autre route (`/api/v1/carbon-logs` par ex.) conserve
+  la CSP stricte d'origine, `unsafe-inline` compris nulle part ailleurs.
+  `/api/docs-json` (JSON pur, aucune page HTML) n'est pas concerné par ce
+  chemin et garde lui aussi la CSP stricte.
 
 ## Module Trip — Planificateur multimodal (F2)
 
