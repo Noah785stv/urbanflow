@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
-import { API_BASE, loginViaUi, mockNetwork } from './helpers';
+import { API_BASE, loginViaUi, mockNetwork, mockStationsNearby } from './helpers';
 
 const SUMMARY_RESPONSE = {
   totalCo2Grams: 839,
@@ -70,6 +70,21 @@ test.describe('Accessibilité — axe-core (§14 : 0 violation critical/serious)
 
     await page.getByRole('button', { name: 'Afficher la carte' }).click();
     await expect(page.locator('.leaflet-container')).toBeVisible();
+
+    const results = await new AxeBuilder({ page }).analyze();
+    expect(seriousOrCritical(results)).toEqual([]);
+  });
+
+  test('planificateur — stations à proximité affichées (§10 web-gbfs-stations.md)', async ({
+    page,
+  }) => {
+    await mockNetwork(page);
+    await mockStationsNearby(page);
+    await loginViaUi(page);
+    await expect(page).toHaveURL('/');
+
+    await page.getByRole('button', { name: 'Afficher les stations à proximité' }).click();
+    await expect(page.getByText('Mairie')).toBeVisible();
 
     const results = await new AxeBuilder({ page }).analyze();
     expect(seriousOrCritical(results)).toEqual([]);

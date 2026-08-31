@@ -1,6 +1,7 @@
 'use client';
 
-import type { Coordinates, PlannedJourney } from '@urbanflow/shared-types';
+import type { Coordinates, PlannedJourney, StationNearbyResult } from '@urbanflow/shared-types';
+import { TransportMode } from '@urbanflow/shared-types';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useEffect, useMemo } from 'react';
@@ -8,12 +9,14 @@ import {
   MapContainer,
   Marker,
   Polyline,
+  Popup,
   TileLayer,
   ZoomControl,
   useMap,
   useMapEvents,
 } from 'react-leaflet';
 import { decodeSections } from '../../lib/decode-geometry';
+import { formatDistance, formatStationAvailability } from '../../lib/format';
 import { RENNES_CENTER } from '../../lib/geolocation';
 import { MODE_COLORS } from '../../lib/mode-labels';
 
@@ -68,6 +71,8 @@ interface TripMapProps {
   destination: Coordinates | null;
   onMapClick: (coordinates: Coordinates) => void;
   selectedJourney: PlannedJourney | null;
+  /** Stations de mobilité partagée à proximité (§6 web-gbfs-stations.md) — vide tant que non sollicitées. */
+  stations?: StationNearbyResult[];
 }
 
 /**
@@ -76,12 +81,16 @@ interface TripMapProps {
  * liste de résultats et les champs de coordonnées (§7, §11), pas la carte.
  * Le tracé de l'itinéraire sélectionné (F2-geometry) est un tronçon par
  * `Polyline`, coloré par mode ; un tronçon sans géométrie n'est pas dessiné.
+ * Idem pour les stations de mobilité partagée (§7 web-gbfs-stations.md) :
+ * les marqueurs sont un complément, `NearbyStations` (liste texte) reste la
+ * source garantie accessible.
  */
 export default function TripMap({
   origin,
   destination,
   onMapClick,
   selectedJourney,
+  stations = [],
 }: TripMapProps) {
   const center = origin ?? RENNES_CENTER;
 
@@ -124,6 +133,22 @@ export default function TripMap({
       {destination && (
         <Marker position={[destination.latitude, destination.longitude]} icon={destinationIcon} />
       )}
+      {stations.map((result) => (
+        <Marker
+          key={result.station.id}
+          position={[result.station.location.latitude, result.station.location.longitude]}
+          icon={createPinIcon(MODE_COLORS[TransportMode.Bike], result.station.name)}
+        >
+          {/* Popup texte (§7) : la couleur du marqueur ne porte jamais seule
+              l'info — même contenu que `NearbyStations` (liste accessible),
+              via `formatStationAvailability` partagé. */}
+          <Popup>
+            <p className="font-semibold">{result.station.name}</p>
+            <p>{formatDistance(result.distanceMeters)}</p>
+            <p>{formatStationAvailability(result.status)}</p>
+          </Popup>
+        </Marker>
+      ))}
     </MapContainer>
   );
 }

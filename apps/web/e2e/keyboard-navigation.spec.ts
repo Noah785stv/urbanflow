@@ -99,6 +99,10 @@ test.describe('Navigation clavier — ordre de tabulation, focus visible, absenc
     await pressTabAndExpect(page, 'link', 'Leaflet');
     await pressTabAndExpect(page, 'link', 'OpenStreetMap');
 
+    // Bouton des stations à proximité (§11 web-gbfs-stations.md) : nouvel
+    // arrêt de tabulation après la carte, avant le pied de page.
+    await pressTabAndExpect(page, 'button', 'Afficher les stations à proximité');
+
     await pressTabAndExpect(page, 'link', 'À propos');
   });
 

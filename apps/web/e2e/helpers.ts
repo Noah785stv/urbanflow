@@ -1,7 +1,46 @@
 import type { Page } from '@playwright/test';
+import type { StationNearbyResult } from '@urbanflow/shared-types';
 
 export const API_BASE = 'http://localhost:3001/api/v1';
 export const GEOCODING_BASE = 'https://data.geopf.fr/geocodage';
+
+// Fixture GBFS (§8-14 web-gbfs-stations.md) — deux stations, l'une avec
+// statut temps réel, l'autre `status: null` (cas explicitement à gérer).
+export const STATIONS_NEARBY_FIXTURE: StationNearbyResult[] = [
+  {
+    station: {
+      id: 'station-mairie',
+      provider: 'star-le-velo-star',
+      externalId: 'ext-mairie',
+      name: 'Mairie',
+      stationType: 'dock',
+      location: { latitude: 48.1173, longitude: -1.6778 },
+      capacity: 20,
+    },
+    distanceMeters: 120,
+    status: {
+      provider: 'star-le-velo-star',
+      externalId: 'ext-mairie',
+      bikesAvailable: 4,
+      docksAvailable: 16,
+      updatedAt: new Date().toISOString(),
+      stale: false,
+    },
+  },
+  {
+    station: {
+      id: 'station-gare',
+      provider: 'star-le-velo-star',
+      externalId: 'ext-gare',
+      name: 'Gare de Rennes',
+      stationType: 'dock',
+      location: { latitude: 48.1032, longitude: -1.6726 },
+      capacity: 30,
+    },
+    distanceMeters: 850,
+    status: null,
+  },
+];
 
 // PNG transparent 1x1 — évite tout appel réseau réel vers les tuiles OSM en test (§12, §14).
 const BLANK_TILE_PNG = Buffer.from(
@@ -78,6 +117,29 @@ export async function mockNetwork(page: Page): Promise<void> {
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify({ type: 'FeatureCollection', features }),
+    });
+  });
+}
+
+/**
+ * Mocke `GET /stations/nearby` (§3, §14 web-gbfs-stations.md) -- jamais
+ * d'appel réel en test. `stations` par défaut : `STATIONS_NEARBY_FIXTURE` ;
+ * passer `[]` ou un statut HTTP d'erreur pour les cas vide/erreur.
+ */
+export async function mockStationsNearby(
+  page: Page,
+  stations: StationNearbyResult[] = STATIONS_NEARBY_FIXTURE,
+  status = 200,
+): Promise<void> {
+  await page.route(`${API_BASE}/stations/nearby**`, async (route) => {
+    if (status !== 200) {
+      await route.fulfill({ status, contentType: 'application/json', body: '{}' });
+      return;
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(stations),
     });
   });
 }

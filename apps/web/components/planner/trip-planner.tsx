@@ -1,6 +1,6 @@
 'use client';
 
-import type { Coordinates, PlannedJourney } from '@urbanflow/shared-types';
+import type { Coordinates, PlannedJourney, StationNearbyResult } from '@urbanflow/shared-types';
 import dynamic from 'next/dynamic';
 import { useMemo, useState } from 'react';
 import { ApiError } from '../../lib/api-client';
@@ -8,11 +8,13 @@ import { confirmTrip } from '../../lib/carbon-api';
 import { formatCoordinatesLabel, reverseGeocode } from '../../lib/geocoding-api';
 import { getCurrentPosition, RENNES_CENTER } from '../../lib/geolocation';
 import { readLastPlan, writeLastPlan } from '../../lib/last-plan-cache';
+import { findNearbyStations } from '../../lib/stations-api';
 import { toConfirmTripRequest } from '../../lib/to-confirm-trip-request';
 import { planTrip } from '../../lib/trip-api';
 import { Button } from '../ui/button';
 import { AddressAutocomplete } from './address-autocomplete';
 import { MapPlaceholder } from './map-placeholder';
+import { NearbyStations, type NearbyStationsStatus } from './nearby-stations';
 import type { ConfirmTripStatus } from './trip-result-card';
 import { TripResults } from './trip-results';
 
@@ -27,6 +29,9 @@ const TripMap = dynamic(() => import('./trip-map'), {
 
 type ClickTarget = 'origin' | 'destination';
 type GeoStatus = 'idle' | 'loading' | 'error';
+
+// §5 web-gbfs-stations.md : rayon par défaut raisonnable, borné à 2000 m côté API.
+const NEARBY_STATIONS_RADIUS_METERS = 800;
 
 /**
  * Résout une adresse lisible pour des coordonnées obtenues hors saisie
@@ -71,6 +76,49 @@ export function TripPlanner() {
   const [mapRequested, setMapRequested] = useState(false);
   function requestMap() {
     setMapRequested(true);
+  }
+
+  // §4-6 web-gbfs-stations.md : recherche à la demande uniquement, jamais au
+  // chargement -- déclenchée par l'activation du bouton.
+  const [stationsEnabled, setStationsEnabled] = useState(false);
+  const [stationsStatus, setStationsStatus] = useState<NearbyStationsStatus>('idle');
+  const [stations, setStations] = useState<StationNearbyResult[]>([]);
+
+  async function handleToggleStations() {
+    if (stationsEnabled) {
+      setStationsEnabled(false);
+      setStations([]);
+      setStationsStatus('idle');
+      return;
+    }
+
+    setStationsEnabled(true);
+    setStationsStatus('loading');
+    requestMap();
+
+    // Position de recherche (§6) : origine déjà posée > géolocalisation >
+    // repli centre métropole -- jamais bloquant sur un refus de géoloc.
+    let searchPoint = origin;
+    if (!searchPoint) {
+      try {
+        const position = await getCurrentPosition();
+        searchPoint = { latitude: position.latitude, longitude: position.longitude };
+      } catch {
+        searchPoint = RENNES_CENTER;
+      }
+    }
+
+    try {
+      const results = await findNearbyStations({
+        lat: searchPoint.latitude,
+        lng: searchPoint.longitude,
+        radius: NEARBY_STATIONS_RADIUS_METERS,
+      });
+      setStations(results);
+      setStationsStatus('idle');
+    } catch {
+      setStationsStatus('error');
+    }
   }
 
   function handleSelect(index: number) {
@@ -283,11 +331,21 @@ export function TripPlanner() {
                 destination={destination}
                 onMapClick={handleMapClick}
                 selectedJourney={selectedJourney}
+                stations={stations}
               />
             ) : (
               <MapPlaceholder onShow={requestMap} />
             )}
           </div>
+
+          <NearbyStations
+            enabled={stationsEnabled}
+            status={stationsStatus}
+            stations={stations}
+            onToggle={() => {
+              void handleToggleStations();
+            }}
+          />
         </form>
 
         <TripResults

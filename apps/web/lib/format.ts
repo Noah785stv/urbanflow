@@ -31,3 +31,37 @@ export function formatDistance(meters: number): string {
   }
   return `${Math.round(meters)} m`;
 }
+
+/**
+ * Texte de disponibilité d'une station de mobilité partagée (§6-7
+ * web-gbfs-stations.md) — partagé par le popup carte et la liste
+ * accessible, pour ne jamais désynchroniser les deux. `status` peut être
+ * `null` (aucune disponibilité connue) ; `stale` signale une donnée non
+ * temps réel (dernière valeur connue en mode dégradé).
+ */
+export function formatStationAvailability(
+  status: {
+    bikesAvailable: number;
+    docksAvailable: number;
+    updatedAt: string;
+    stale: boolean;
+  } | null,
+): string {
+  if (!status) {
+    return 'Disponibilité indisponible.';
+  }
+
+  const bikes = `${status.bikesAvailable} vélo${status.bikesAvailable > 1 ? 's' : ''} disponible${status.bikesAvailable > 1 ? 's' : ''}`;
+  const docks = `${status.docksAvailable} place${status.docksAvailable > 1 ? 's' : ''}`;
+  const base = `${bikes} · ${docks}`;
+
+  if (status.stale) {
+    const time = new Date(status.updatedAt).toLocaleTimeString('fr-FR', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+    return `${base} (dernière mise à jour à ${time})`;
+  }
+
+  return base;
+}

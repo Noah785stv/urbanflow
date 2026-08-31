@@ -121,6 +121,35 @@ Nationale, sans clé) directement depuis le navigateur.
   ajouterait une latence perceptible sur un pattern typeahead sans rien
   protéger. Documenté explicitement plutôt que laissé implicite.
 
+### Stations à proximité (GBFS, `docs/specs/web-gbfs-stations.md`)
+
+Bouton **« Afficher les stations à proximité »** (`components/planner/nearby-stations.tsx`)
+sous la carte : recherche **strictement à la demande**, jamais au chargement
+du planificateur — `GET /stations/nearby` (§3, `lib/stations-api.ts`) n'est
+appelé qu'après activation explicite.
+
+- **Position de recherche** : origine déjà posée dans le formulaire, sinon
+  géolocalisation, sinon repli sur le centre de la métropole
+  (`RENNES_CENTER`) — jamais bloquant sur un refus de géolocalisation, même
+  logique de repli que « Utiliser ma position ».
+- **`stationType` vaut toujours `"dock"`** côté GBFS (le protocole ne
+  distingue pas vélo/trottinette au niveau `station_information`) — jamais de
+  distinction inventée côté front ; l'UI parle de « stations de mobilité
+  partagée ».
+- **`status` peut être `null`** (aucune disponibilité connue) ou porter
+  `stale: true` (dernière valeur connue, mode dégradé côté API) —
+  `formatStationAvailability` (`lib/format.ts`) gère les deux cas sans
+  planter, texte partagé entre le popup carte et la liste.
+- **Deux surfaces pour une seule source de vérité** : les marqueurs
+  `TripMap` (couleur vélo du design system, popup texte) sont un complément
+  visuel ; `NearbyStations` (liste `<ul>` toujours visible une fois activée)
+  reste la source garantie accessible — même schéma que `MonthlyChart`
+  (tableau de bord carbone).
+- **Active aussi la carte** (`requestMap()`, C5) si elle n'était pas encore
+  montée : les marqueurs de stations n'ont de sens que sur une carte visible.
+- Vérifié par `axe-core` avec les stations **affichées** (état le plus à
+  risque), pas seulement au repos.
+
 ## Module Tableau de bord carbone (F4-web)
 
 Spec : `docs/specs/F4-web-dashboard.md`. Volet frontend de F4 (backend livré,

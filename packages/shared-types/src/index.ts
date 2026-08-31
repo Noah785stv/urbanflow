@@ -77,6 +77,18 @@ export interface StationStatus {
   stale: boolean;
 }
 
+/**
+ * Résultat de `GET /stations/nearby` (§4.1, §8) — une station enrichie de sa
+ * distance et de son statut temps réel. Composite backend-only jusqu'ici
+ * (`stations.service.ts`) ; ajouté ici pour que le front ne le redéfinisse
+ * pas de son côté (Lot GBFS, `docs/specs/web-gbfs-stations.md` §4).
+ */
+export interface StationNearbyResult {
+  station: Station;
+  distanceMeters: number;
+  status: StationStatus | null;
+}
+
 /** Prochain passage à un arrêt de transport en commun (§8). */
 export interface Departure {
   stopId: string;
