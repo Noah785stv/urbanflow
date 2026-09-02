@@ -1,6 +1,6 @@
 import { TransportMode } from '@urbanflow/shared-types';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { readLastPlan, writeLastPlan, type StoredPlan } from './last-plan-cache';
+import { clearLastPlan, readLastPlan, writeLastPlan, type StoredPlan } from './last-plan-cache';
 
 const STORED: StoredPlan = {
   origin: { latitude: 48.1173, longitude: -1.6778 },
@@ -53,5 +53,15 @@ describe('last-plan-cache', () => {
   it('renvoie null plutôt que de planter sur une entrée écrite par une version antérieure du cache (juste `PlanTripResponse`, sans origine/destination)', () => {
     window.localStorage.setItem('urbanflow:last-plan', JSON.stringify(STORED.plan));
     expect(readLastPlan()).toBeNull();
+  });
+
+  it('clearLastPlan supprime le trajet stocké (poste partagé, appelé à la déconnexion)', () => {
+    writeLastPlan(STORED);
+    expect(readLastPlan()).toEqual(STORED);
+
+    clearLastPlan();
+
+    expect(readLastPlan()).toBeNull();
+    expect(window.localStorage.getItem('urbanflow:last-plan')).toBeNull();
   });
 });

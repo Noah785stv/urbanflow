@@ -90,3 +90,24 @@ export function writeLastPlan(stored: StoredPlan): void {
     // silencieusement, ce n'est qu'un confort hors-ligne/reprise (§4.6-like).
   }
 }
+
+/**
+ * Appelé à la déconnexion (`AuthProvider.logout`) : la clé n'est pas
+ * rattachée à un utilisateur -- sans ça, sur un poste partagé, la personne
+ * suivante qui se connecte verrait le dernier trajet de la précédente
+ * restauré. Ne couvre pas la fermeture d'onglet sans déconnexion explicite,
+ * mais l'exposition y reste la même paire d'adresses (jamais un jeton).
+ */
+export function clearLastPlan(): void {
+  if (typeof window === 'undefined') {
+    return;
+  }
+  cachedRaw = null;
+  cachedParsed = null;
+  try {
+    window.localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // Stockage indisponible : rien de plus à faire, cohérent avec les autres
+    // dégradations silencieuses de ce module.
+  }
+}

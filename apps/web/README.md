@@ -67,6 +67,13 @@ trajet → voir les 3 itinéraires classés avec leur CO₂ sur une carte**.
   config ESLint de ce projet interdit `setState` dans un effet et la lecture
   d'une ref pendant le rendu (`eslint-plugin-react-hooks` récent, aligné
   React Compiler).
+- **Effacé à la déconnexion.** `AuthProvider.logout()` appelle
+  `clearLastPlan()` : la clé `localStorage` n'est pas rattachée à un
+  utilisateur — sans ça, sur un poste partagé, la personne suivante à se
+  connecter verrait le dernier trajet de la précédente restauré. Ne couvre
+  pas la fermeture d'onglet sans déconnexion explicite (les jetons mémoire
+  sont de toute façon déjà perdus dans ce cas ; l'exposition résiduelle reste
+  la même paire d'adresses, jamais un jeton).
 - **Accessibilité (§11, C7)** : navigation clavier complète (y compris pour
   poser origine/destination — champs lat/lng en plus du clic carte), focus
   visible, contrastes AA, région live pour l'annonce des résultats. Vérifié

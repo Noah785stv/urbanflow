@@ -106,4 +106,39 @@ test.describe('Restauration du dernier trajet après reconnexion', () => {
     await destinationField.fill('Autre destination');
     await expect(destinationField).toHaveValue('Autre destination');
   });
+
+  test('la déconnexion efface le trajet mémorisé (poste partagé)', async ({ page }) => {
+    await mockNetwork(page);
+    await page.route(`${API_BASE}/trips/plan`, async (route) => {
+      await route.fulfill({
+        status: 201,
+        contentType: 'application/json',
+        body: JSON.stringify(PLAN_RESPONSE),
+      });
+    });
+
+    await loginViaUi(page);
+    await expect(page).toHaveURL('/');
+    await fillAddress(page, 'Origine', 'Origine test');
+    await fillAddress(page, 'Destination', 'Destination test');
+    await page.getByRole('button', { name: 'Calculer' }).click();
+    await expect(page.getByRole('status')).toContainText('1 itinéraire trouvé');
+    expect(
+      await page.evaluate(() => window.localStorage.getItem('urbanflow:last-plan')),
+    ).not.toBeNull();
+
+    await page.getByRole('button', { name: 'Se déconnecter' }).click();
+    await expect(page).toHaveURL('/login');
+    expect(
+      await page.evaluate(() => window.localStorage.getItem('urbanflow:last-plan')),
+    ).toBeNull();
+
+    // Une autre personne se connecte sur ce même navigateur : formulaire
+    // vide, pas le trajet de la précédente.
+    await page.getByLabel('E-mail').fill('e2e@urbanflow.test');
+    await page.getByLabel('Mot de passe').fill('un-mot-de-passe-tres-solide');
+    await page.getByLabel('Mot de passe').press('Enter');
+    await expect(page).toHaveURL('/');
+    await expect(page.getByRole('combobox', { name: 'Origine' })).toHaveValue('');
+  });
 });
