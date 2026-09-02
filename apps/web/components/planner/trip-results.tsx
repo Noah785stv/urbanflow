@@ -1,6 +1,8 @@
 'use client';
 
 import type { PlannedJourney } from '@urbanflow/shared-types';
+import { useMemo, useState } from 'react';
+import { Button } from '../ui/button';
 import { TripResultCard, type ConfirmTripStatus } from './trip-result-card';
 
 interface TripResultsProps {
@@ -11,6 +13,32 @@ interface TripResultsProps {
   confirmStatus?: ConfirmTripStatus;
   confirmError?: string | null;
   onConfirm?: () => void;
+}
+
+type SortCriterion = 'duration' | 'co2' | 'cost';
+
+const SORT_OPTIONS: { value: SortCriterion; label: string }[] = [
+  { value: 'duration', label: 'Durée' },
+  { value: 'co2', label: 'CO₂' },
+  { value: 'cost', label: 'Coût' },
+];
+
+/**
+ * Valeur de tri par critère — toujours croissant (meilleur en premier),
+ * cohérent avec la sémantique des labels existants (§8 : « le plus
+ * rapide »/« le plus écologique »/« le moins cher » désignent tous une
+ * valeur minimale). Un coût inconnu (`null`, §5.3) est trié en dernier
+ * plutôt que traité comme 0 -- ce n'est pas gratuit, juste non estimé.
+ */
+function sortValue(journey: PlannedJourney, criterion: SortCriterion): number {
+  switch (criterion) {
+    case 'duration':
+      return journey.durationSeconds;
+    case 'co2':
+      return journey.co2Grams;
+    case 'cost':
+      return journey.estimatedCostCents ?? Number.POSITIVE_INFINITY;
+  }
 }
 
 function announcementFor(journeys: PlannedJourney[], stale: boolean): string {
@@ -35,6 +63,20 @@ export function TripResults({
   confirmError,
   onConfirm,
 }: TripResultsProps) {
+  const [sortBy, setSortBy] = useState<SortCriterion>('duration');
+
+  // Trie une copie associant chaque trajet à son index d'origine : `onSelect`
+  // et `selectedIndex` (portés par le parent) référencent toujours la
+  // position dans `journeys`, jamais l'ordre d'affichage -- la sélection
+  // reste donc correcte quel que soit le tri choisi.
+  const sortedEntries = useMemo(
+    () =>
+      journeys
+        .map((journey, originalIndex) => ({ journey, originalIndex }))
+        .sort((a, b) => sortValue(a.journey, sortBy) - sortValue(b.journey, sortBy)),
+    [journeys, sortBy],
+  );
+
   return (
     <section aria-labelledby="results-heading" className="flex flex-col gap-3">
       <h2 id="results-heading" className="text-[20px] font-semibold leading-[26px] text-ink-900">
@@ -51,17 +93,37 @@ export function TripResults({
         </p>
       )}
 
+      {journeys.length > 1 && (
+        <fieldset className="flex flex-col gap-1">
+          <legend className="text-sm text-ink-600">Trier par</legend>
+          <div className="flex gap-2" role="radiogroup" aria-label="Critère de tri des itinéraires">
+            {SORT_OPTIONS.map((option) => (
+              <Button
+                key={option.value}
+                type="button"
+                variant="secondary"
+                aria-pressed={sortBy === option.value}
+                onClick={() => setSortBy(option.value)}
+                className={`text-sm ${sortBy === option.value ? 'border-brand-blue-700 bg-brand-blue-50' : ''}`}
+              >
+                {option.label}
+              </Button>
+            ))}
+          </div>
+        </fieldset>
+      )}
+
       {journeys.length > 0 && (
         <ol className="flex flex-col gap-3">
-          {journeys.map((journey, index) => (
+          {sortedEntries.map(({ journey, originalIndex }) => (
             <TripResultCard
-              key={`${journey.departureAt}-${index}`}
+              key={`${journey.departureAt}-${originalIndex}`}
               journey={journey}
-              isSelected={selectedIndex === index}
-              onSelect={() => onSelect(index)}
-              confirmStatus={selectedIndex === index ? confirmStatus : undefined}
-              confirmError={selectedIndex === index ? confirmError : undefined}
-              onConfirm={selectedIndex === index ? onConfirm : undefined}
+              isSelected={selectedIndex === originalIndex}
+              onSelect={() => onSelect(originalIndex)}
+              confirmStatus={selectedIndex === originalIndex ? confirmStatus : undefined}
+              confirmError={selectedIndex === originalIndex ? confirmError : undefined}
+              onConfirm={selectedIndex === originalIndex ? onConfirm : undefined}
             />
           ))}
         </ol>
