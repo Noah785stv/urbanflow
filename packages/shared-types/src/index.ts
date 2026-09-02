@@ -108,6 +108,17 @@ export interface JourneySection {
    * carbone, le coût ou le classement, qui n'en dépendent pas.
    */
   geometry?: string;
+  /**
+   * Détail d'un tronçon en transport en commun (ligne, direction, arrêts de
+   * montée/descente) — présent uniquement pour ce cas (§détail itinéraire).
+   * Un tronçon à pied/vélo n'a ni ligne ni arrêt réel : ces quatre champs
+   * restent `undefined` plutôt que de porter un texte trompeur (OTP nomme
+   * les extrémités du trajet "Origin"/"Destination", jamais un vrai arrêt).
+   */
+  line?: string;
+  headsign?: string;
+  fromStopName?: string;
+  toStopName?: string;
 }
 
 /** Option d'itinéraire retournée par `RoutingProvider.getJourneys` (consommée par F2). */

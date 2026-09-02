@@ -86,6 +86,16 @@ const OTP_PLAN_CONNECTION_QUERY = `
             mode
             duration
             distance
+            headsign
+            route {
+              shortName
+            }
+            from {
+              name
+            }
+            to {
+              name
+            }
             legGeometry {
               points
             }
@@ -256,12 +266,25 @@ export class OtpProvider implements TransitProvider, RoutingProvider {
     };
   }
 
+  /**
+   * `route` n'est renseigné par OTP que pour un tronçon en transport en
+   * commun (vérifié par introspection live — `null` pour la marche/le
+   * vélo). C'est le signal utilisé pour exposer ligne/direction/arrêts :
+   * `from`/`to` existent toujours côté OTP, mais valent "Origin"/
+   * "Destination" (placeholders, pas des arrêts réels) sur un tronçon à
+   * pied — ne jamais les exposer dans ce cas (détail itinéraire).
+   */
   private mapLeg(leg: OtpLeg): JourneySection {
+    const isTransit = Boolean(leg.route);
     return {
       mode: this.mapMode(leg.mode),
       durationSeconds: leg.duration,
       distanceMeters: Math.round(leg.distance),
       geometry: leg.legGeometry?.points ?? undefined,
+      line: isTransit ? (leg.route?.shortName ?? undefined) : undefined,
+      headsign: isTransit ? (leg.headsign ?? undefined) : undefined,
+      fromStopName: isTransit ? leg.from?.name : undefined,
+      toStopName: isTransit ? leg.to?.name : undefined,
     };
   }
 

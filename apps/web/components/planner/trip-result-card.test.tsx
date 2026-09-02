@@ -18,6 +18,22 @@ const journey: PlannedJourney = {
   labels: ['fastest', 'cheapest'],
 };
 
+const journeyWithTransitDetail: PlannedJourney = {
+  ...journey,
+  sections: [
+    { mode: TransportMode.Walk, durationSeconds: 300, distanceMeters: 400 },
+    {
+      mode: TransportMode.Metro,
+      durationSeconds: 858,
+      distanceMeters: 7207,
+      line: 'a',
+      headsign: 'La Poterie',
+      fromStopName: 'Pontchaillou',
+      toStopName: 'La Poterie',
+    },
+  ],
+};
+
 describe('TripResultCard', () => {
   it('affiche les labels, la durée, le CO2 et le coût', () => {
     render(<TripResultCard journey={journey} isSelected={false} onSelect={vi.fn()} />);
@@ -68,6 +84,34 @@ describe('TripResultCard', () => {
     expect(screen.getByText('(5 min, 400 m)')).toBeInTheDocument();
     expect(screen.getByText('Bus')).toBeInTheDocument();
     expect(screen.getByText('(11 min, 3.0 km)')).toBeInTheDocument();
+  });
+
+  it("n'affiche le détail de l'itinéraire que si l'option est sélectionnée", () => {
+    const { rerender } = render(
+      <TripResultCard journey={journeyWithTransitDetail} isSelected={false} onSelect={vi.fn()} />,
+    );
+    expect(screen.queryByText('Détail de l’itinéraire')).not.toBeInTheDocument();
+
+    rerender(<TripResultCard journey={journeyWithTransitDetail} isSelected onSelect={vi.fn()} />);
+    expect(screen.getByText('Détail de l’itinéraire')).toBeInTheDocument();
+  });
+
+  it('affiche ligne, direction et arrêts pour un tronçon en transport en commun', () => {
+    render(<TripResultCard journey={journeyWithTransitDetail} isSelected onSelect={vi.fn()} />);
+
+    expect(screen.getByText('Métro a', { exact: false })).toBeInTheDocument();
+    expect(screen.getByText(/direction La Poterie/)).toBeInTheDocument();
+    expect(screen.getByText(/de Pontchaillou à La Poterie/)).toBeInTheDocument();
+  });
+
+  it("n'invente jamais un arrêt pour un tronçon à pied (pas de ligne/arrêt OTP)", () => {
+    render(<TripResultCard journey={journeyWithTransitDetail} isSelected onSelect={vi.fn()} />);
+
+    // Le tronçon à pied garde le même format que le résumé compact : mode,
+    // durée, distance -- jamais "de Origin à ..." (placeholder OTP, §détail
+    // itinéraire).
+    expect(screen.getByText('Marche (5 min, 400 m)')).toBeInTheDocument();
+    expect(screen.queryByText(/Origin/)).not.toBeInTheDocument();
   });
 
   it("n'affiche le bouton « Enregistrer ce trajet » que si l'option est sélectionnée (F4-web §6)", () => {

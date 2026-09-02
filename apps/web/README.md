@@ -68,6 +68,15 @@ trajet → voir les 3 itinéraires classés avec leur CO₂ sur une carte**.
   copie locale : `selectedIndex`/`onSelect` (portés par `TripPlanner`)
   référencent toujours l'index dans `journeys`, jamais la position affichée —
   la sélection reste donc correcte quel que soit le tri actif.
+- **Détail de l'itinéraire** (`components/planner/trip-result-card.tsx`) : à
+  la **sélection** d'une option (pas à la confirmation, §RGPD — voir la
+  décomposition ci-dessous) s'affiche le détail pas-à-pas : pour un tronçon
+  en transport en commun, ligne + direction + arrêts de montée/descente
+  (`JourneySection.line`/`headsign`/`fromStopName`/`toStopName`, envoyés par
+  `apps/api` uniquement quand `route` est non nul côté OTP). Un tronçon à
+  pied garde le format compact (mode, durée, distance) : OTP y renseigne
+  `from`/`to` avec des placeholders ("Origin"/"Destination"), jamais exposés
+  comme de vrais arrêts.
 
 ### Tracé de l'itinéraire (F2-geometry)
 

@@ -42,12 +42,29 @@ export interface OtpGeometry {
   length: number | null;
 }
 
+/** Extrémité d'un tronçon (arrêt réel, ou point de départ/arrivée synthétique — nommé "Origin"/"Destination" par OTP). */
+export interface OtpPlace {
+  name: string;
+}
+
 export interface OtpLeg {
   /** Enum `Mode` (WALK, BICYCLE, BUS, SUBWAY, TRAM, RAIL, ...). */
   mode: string;
   duration: number; // secondes
   distance: number; // mètres — toujours renseigné (contrairement au bug distanceMeters=0 de Navitia)
   legGeometry: OtpGeometry | null;
+  /**
+   * `route`/`headsign` sont `null` pour un tronçon à pied ou vélo (vérifié
+   * par introspection live) — non `null` uniquement pour un tronçon en
+   * transport en commun, seul cas où le détail ligne/direction/arrêts a du
+   * sens (§détail itinéraire). `from`/`to` existent toujours, mais valent
+   * "Origin"/"Destination" (placeholders OTP) aux extrémités du trajet — pas
+   * exploitables comme noms d'arrêt, d'où le filtrage sur `route` non nul.
+   */
+  headsign: string | null;
+  route: OtpRoute | null;
+  from: OtpPlace;
+  to: OtpPlace;
 }
 
 export interface OtpItinerary {

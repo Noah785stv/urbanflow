@@ -221,6 +221,13 @@ Orchestration `RoutingProvider.getJourneys` (F3) → enrichissement carbone/coû
   depuis `OtpProvider` (champ `legGeometry.points`) — jamais décodée côté
   serveur, pour limiter la taille du payload. Champ **optionnel**, sans effet
   sur le calcul carbone, le coût ou le classement.
+- **`section.line`/`headsign`/`fromStopName`/`toStopName`** (détail de
+  l'itinéraire) : `OtpProvider.mapLeg` ne les renseigne que si `route` est non
+  nul côté OTP — vérifié par introspection live, ce champ vaut `null`
+  uniquement sur un tronçon à pied/vélo. `from`/`to` existent toujours côté
+  OTP mais valent "Origin"/"Destination" (placeholders) aux extrémités du
+  trajet — jamais exposés comme de vrais arrêts, d'où le filtrage sur `route`
+  plutôt que sur la présence de `from`/`to`.
 
 ### Hors périmètre F2 (voir spec §2, §12)
 

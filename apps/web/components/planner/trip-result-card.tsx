@@ -98,6 +98,38 @@ export function TripResultCard({
           ))}
         </ol>
 
+        {isSelected && (
+          <div className="mt-3 border-t border-line-200 pt-3">
+            <p className="text-sm font-semibold text-ink-900">Détail de l’itinéraire</p>
+            <ol className="mt-2 flex flex-col gap-1 text-sm text-ink-900">
+              {journey.sections.map((section, index) => (
+                <li key={`detail-${section.mode}-${index}`}>
+                  {section.line ? (
+                    <>
+                      <span className="font-semibold">
+                        {MODE_LABELS[section.mode]} {section.line}
+                      </span>
+                      {section.headsign && <> direction {section.headsign}</>}
+                      {section.fromStopName && section.toStopName && (
+                        <>
+                          {' '}
+                          — de {section.fromStopName} à {section.toStopName}
+                        </>
+                      )}{' '}
+                      ({formatDuration(section.durationSeconds)})
+                    </>
+                  ) : (
+                    <>
+                      {MODE_LABELS[section.mode]} ({formatDuration(section.durationSeconds)},{' '}
+                      {formatDistance(section.distanceMeters)})
+                    </>
+                  )}
+                </li>
+              ))}
+            </ol>
+          </div>
+        )}
+
         {isSelected && onConfirm && (
           <div className="mt-3 border-t border-line-200 pt-3">
             {confirmStatus === 'success' ? (
