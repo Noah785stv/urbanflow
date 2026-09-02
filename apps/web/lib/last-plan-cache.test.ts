@@ -49,4 +49,9 @@ describe('last-plan-cache', () => {
     window.localStorage.setItem('urbanflow:last-plan', '{ceci n’est pas du JSON');
     expect(readLastPlan()).toBeNull();
   });
+
+  it('renvoie null plutôt que de planter sur une entrée écrite par une version antérieure du cache (juste `PlanTripResponse`, sans origine/destination)', () => {
+    window.localStorage.setItem('urbanflow:last-plan', JSON.stringify(STORED.plan));
+    expect(readLastPlan()).toBeNull();
+  });
 });

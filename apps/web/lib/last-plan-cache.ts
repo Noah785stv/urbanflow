@@ -37,6 +37,28 @@ export interface StoredPlan {
 let cachedRaw: string | null = null;
 let cachedParsed: StoredPlan | null = null;
 
+/**
+ * Vérifie la forme minimale attendue avant de faire confiance à la valeur
+ * lue -- une entrée écrite par une version antérieure de ce cache (avant
+ * l'ajout d'origine/destination, quand seul `PlanTripResponse` y était
+ * stocké tel quel) ne doit jamais faire planter la restauration : elle est
+ * simplement traitée comme absente.
+ */
+function isStoredPlan(value: unknown): value is StoredPlan {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+  const candidate = value as Partial<StoredPlan>;
+  return (
+    Boolean(candidate.origin) &&
+    typeof candidate.originLabel === 'string' &&
+    Boolean(candidate.destination) &&
+    typeof candidate.destinationLabel === 'string' &&
+    candidate.plan !== undefined &&
+    Array.isArray(candidate.plan.journeys)
+  );
+}
+
 export function readLastPlan(): StoredPlan | null {
   if (typeof window === 'undefined') {
     return null;
@@ -47,7 +69,8 @@ export function readLastPlan(): StoredPlan | null {
       return cachedParsed;
     }
     cachedRaw = raw;
-    cachedParsed = raw ? (JSON.parse(raw) as StoredPlan) : null;
+    const parsed: unknown = raw ? JSON.parse(raw) : null;
+    cachedParsed = isStoredPlan(parsed) ? parsed : null;
     return cachedParsed;
   } catch {
     cachedRaw = null;

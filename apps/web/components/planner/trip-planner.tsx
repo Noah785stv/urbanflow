@@ -7,7 +7,7 @@ import { ApiError } from '../../lib/api-client';
 import { confirmTrip } from '../../lib/carbon-api';
 import { formatCoordinatesLabel, reverseGeocode } from '../../lib/geocoding-api';
 import { getCurrentPosition, RENNES_CENTER } from '../../lib/geolocation';
-import { readLastPlan, writeLastPlan } from '../../lib/last-plan-cache';
+import { readLastPlan, writeLastPlan, type StoredPlan } from '../../lib/last-plan-cache';
 import { toConfirmTripRequest } from '../../lib/to-confirm-trip-request';
 import { planTrip } from '../../lib/trip-api';
 import { Button } from '../ui/button';
@@ -93,11 +93,13 @@ export function TripPlanner() {
   // documenté par React, react.dev/learn/you-might-not-need-an-effect) :
   // comparer à la valeur du rendu précédent via du state, pas une ref (les
   // refs ne peuvent pas être lues pendant le rendu sous cette config lint).
-  // `storedPlan` ne change de référence qu'au tout premier rendu après
-  // hydratation (repli serveur `null` → valeur réelle) ou après un nouveau
-  // `writeLastPlan` (soumission réussie) -- dans ce second cas, ré-appliquer
-  // est sans effet, ce sont déjà les valeurs affichées.
-  const [appliedPlan, setAppliedPlan] = useState(storedPlan);
+  // Sentinelle `undefined` distincte de tout `StoredPlan | null` réel :
+  // `TripPlanner` ne passe jamais par un vrai rendu serveur avec le repli
+  // `null` (il ne monte que côté client, une fois authentifié) -- initialiser
+  // avec `storedPlan` capturerait la même valeur dès le premier rendu et la
+  // comparaison ne détecterait jamais de changement (bug constaté : la
+  // restauration ne s'appliquait jamais).
+  const [appliedPlan, setAppliedPlan] = useState<StoredPlan | null | undefined>(undefined);
   if (storedPlan !== appliedPlan) {
     setAppliedPlan(storedPlan);
     if (storedPlan) {
