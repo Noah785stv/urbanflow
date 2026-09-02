@@ -11,6 +11,7 @@ import {
 } from 'react';
 import * as authApi from '../lib/auth-api';
 import type { CurrentUser } from '../lib/auth-api';
+import { clearLastPlan } from '../lib/last-plan-cache';
 import { getTokens, setTokens, subscribe } from '../lib/token-store';
 
 interface AuthContextValue {
@@ -66,6 +67,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setTokens(null);
       setUser(null);
+      // Poste partagé (§9 durcissement) : la clé du dernier trajet n'est pas
+      // rattachée à un utilisateur -- sans ça, la personne suivante à se
+      // connecter sur ce navigateur verrait le dernier trajet de celle-ci.
+      clearLastPlan();
     }
   }, []);
 

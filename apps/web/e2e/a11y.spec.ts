@@ -17,7 +17,17 @@ const PLAN_RESPONSE = {
       departureAt: '2026-08-17T08:05:00+02:00',
       arrivalAt: '2026-08-17T08:30:00+02:00',
       durationSeconds: 1500,
-      sections: [{ mode: 'metro', durationSeconds: 1500, distanceMeters: 2600 }],
+      sections: [
+        {
+          mode: 'metro',
+          durationSeconds: 1500,
+          distanceMeters: 2600,
+          line: 'a',
+          headsign: 'La Poterie',
+          fromStopName: 'Pontchaillou',
+          toStopName: 'La Poterie',
+        },
+      ],
       co2Grams: 10,
       estimatedCostCents: 180,
       labels: ['greenest', 'cheapest'],
@@ -122,6 +132,41 @@ test.describe('Accessibilité — axe-core (§14 : 0 violation critical/serious)
     await expect(
       page.getByRole('radiogroup', { name: 'Critère de tri des itinéraires' }),
     ).toBeVisible();
+
+    const results = await new AxeBuilder({ page }).analyze();
+    expect(seriousOrCritical(results)).toEqual([]);
+  });
+
+  test('planificateur — itinéraire sélectionné, détail (ligne/direction/arrêts) affiché', async ({
+    page,
+  }) => {
+    await mockNetwork(page);
+    await page.route(`${API_BASE}/trips/plan`, async (route) => {
+      await route.fulfill({
+        status: 201,
+        contentType: 'application/json',
+        body: JSON.stringify(PLAN_RESPONSE),
+      });
+    });
+
+    await loginViaUi(page);
+    await expect(page).toHaveURL('/');
+
+    await fillAddress(page, 'Origine', 'Origine test');
+    await fillAddress(page, 'Destination', 'Destination test');
+    await page.getByRole('button', { name: 'Calculer' }).click();
+
+    // Le tri par défaut (durée) place le bus avant le métro -- on cible donc
+    // explicitement la carte du métro (seule à porter du détail transport en
+    // commun dans ce mock), pas « le premier bouton » qui dépend du tri actif.
+    await page
+      .locator('li')
+      .filter({ hasText: 'Le plus écologique' })
+      .getByRole('button', { name: 'Sélectionner' })
+      .click();
+
+    await expect(page.getByText('Détail de l’itinéraire')).toBeVisible();
+    await expect(page.getByText('direction La Poterie')).toBeVisible();
 
     const results = await new AxeBuilder({ page }).analyze();
     expect(seriousOrCritical(results)).toEqual([]);

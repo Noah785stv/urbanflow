@@ -4,30 +4,44 @@
       "edges": [
         {
           "node": {
-            "start": "2026-08-17T08:04:45+02:00",
-            "end": "2026-08-17T08:26:08+02:00",
-            "duration": 1283,
+            "start": "2026-09-02T12:14:23+02:00",
+            "end": "2026-09-02T12:53:44+02:00",
+            "duration": 2361,
             "legs": [
               {
                 "mode": "WALK",
-                "duration": 75,
-                "distance": 78.61,
-                "legGeometry": { "points": "c|tdHfufIMZ?J?J?HDd@B`A@\\@FG@" }
+                "duration": 812.0,
+                "distance": 915.18,
+                "headsign": null,
+                "route": null,
+                "from": { "name": "Origin" },
+                "to": { "name": "Pontchaillou" },
+                "legGeometry": {
+                  "points": "ijvdHbdhIh@jELlAFLHx@@F?D?BBNEf@RJFDL@`@D@?J?@EBCL?lBJJJDCB?D?l@BJ?D@?n@It@Cl@A\\D^?L@BKdICjAEdCD?xAFB?nDNBPQjDAzA?R@r@LA"
+                }
               },
               {
-                "mode": "BUS",
-                "duration": 930,
-                "distance": 5357.0,
+                "mode": "SUBWAY",
+                "duration": 858.0,
+                "distance": 7207.0,
+                "headsign": "La Poterie",
+                "route": { "shortName": "a" },
+                "from": { "name": "Pontchaillou" },
+                "to": { "name": "La Poterie" },
                 "legGeometry": {
-                  "points": "a|tdHr{fIXvJ?\\QBcAG{@O{A]C?gBi@c@Gm@?a@Ho@Ty@l@k@jAmAlCcBrC}@pAORq@r@c@f@wA`B]XQDK@uBt@K@g@RAMOwDCe@YwIgAIW@ODKJ]Ne@P{B|@eK|DgBl@[JqB\\Y?oA^oIdCsAVmLvBYVAECEACC?G?C@CBABAF@FkEt@sDt@wCh@}Cl@e@He@?AKAGAGAECECCCCCCEACAE?G@CBEBEDCDADADAFAF?F?F@F@DBF@DBBBDBBD@B@F?B?F\\Fl@DbAZhHJjAJb@CBCDCDCDAFAH?L@F@DBJFHHDD@B?NnALr@^`Cl@lEEDEDCFCDELCL?HAD@J@PDJDJDHDBLHDBH@H@HAFAHEHEBEDEBGf@Tr@Jl@LdAb@?L?D@J@DBFDDBBB@D@HABABCFGBIZTZd@dAvAAF?F?FBD@DDBBBD?DAFGlCtEDNTlAgAb@?@KFwBtCqCzDe@r@`AjC@DPd@^ZPTHTP`Cz@|NDNhArA\\b@ZNrDdAtBj@dAXb@Cx@O\\GNfCj@xBtC|Kx@zCFPJJHFNDNAhCU"
+                  "points": "uvudHnviICsA?[?W?UB_@HmBF{@Ho@Hg@Je@Le@Na@P_@R_@R[V[PQNMPMTOf@YxDkBVMTOVSZ[X]Vc@LWP_@r@aBp@}AL[L_@L_@L_@Nq@Py@rByKTcAJg@Lc@L_@Pe@Rc@Ta@V]RYTUVWlAcAVUX[RSNSPYdAgBl@_AR[PURUTQZSVMVKVGZG\\Ch@AtKQj@C~@E`@AxA?bEA^@d@Bh@FhAR^F`@B^@PAVCPEPEPGPGVMNMZURUX]PWN[Re@Ne@Ja@FWDWLy@J}@zAkMFg@Fa@Fc@FYPq@Po@Tm@JUPa@NYR[zA_Cz@qAT[RWNQVSNMVOXMVKXGRCRCPAR?T@^DRDRFPFRHPJPJNNPNNNLPX`@Tb@Rd@JVHXJf@Lj@Hl@ZvBHb@H^Jf@HVN`@N\\Tb@V`@X\\ZX\\TPJPH^L^HRBR@^?RAPAl@K`AS|@Qb@IVGZMtAi@`@Od@Mb@Gj@I~Fk@zCSrAKTAN?R@L@^DpC`@f@D\\BtLNf@BnADh@BbEDf@@N?PCNCNINKLMJQHQDMDKBOBQBO@Q@e@@mG?uALcZVqk@@}A?g@?_@?]AWEm@Gk@EUE]Kc@Og@oCmJKa@I[Mk@Ik@E]AUEm@Ae@?o@@iBBcFBiAP{JB}APoc@"
                 }
               },
               {
                 "mode": "WALK",
-                "duration": 278,
-                "distance": 350.43,
+                "duration": 691.0,
+                "distance": 670.6,
+                "headsign": null,
+                "route": null,
+                "from": { "name": "La Poterie" },
+                "to": { "name": "Destination" },
                 "legGeometry": {
-                  "points": "cbwdH|rlIAMbAMPAB?DAB?d@ElBSNA?G?ENELDHL@JTJj@RT@l@ANB^EAu@@KDMBQTJVC"
+                  "points": "qaodHfe`IA?@[@@?C@C@CPY@C@E?EAA?C?GAAAA?@A?AD?D?D?B?D??EAKAMCIAG?A??C?S@GDg@GA?@CYuCNGEASCCg@?gADAOa@?eA?G@E?G@G?mABqADg@FUD[FG?AOE@A?E@g@?C@G?E??U@aA?YAOEIEGi@y@We@AA"
                 }
               }
             ]

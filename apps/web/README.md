@@ -56,6 +56,24 @@ trajet → voir les 3 itinéraires classés avec leur CO₂ sur une carte**.
   shell ; la dernière réponse de `POST /trips/plan` (non cachable côté SW —
   Cache API ne gère que les GET) est mémorisée dans `localStorage`
   (`lib/last-plan-cache.ts`) et resservie si le réseau échoue.
+- **Restauration après reconnexion.** Le même `localStorage` sert aussi à
+  repeupler origine/destination et les résultats une fois l'utilisateur
+  reconnecté après un refresh (§9 : les jetons en mémoire ne survivent pas au
+  rechargement, la session se perd systématiquement — ce que ça restaure,
+  c'est le formulaire, pas la session). Lu via `useSyncExternalStore`
+  (repli serveur `null`) plutôt qu'un `useEffect`, pour rester compatible
+  SSR sans mismatch d'hydratation ; l'application de l'état restauré compare
+  la valeur au rendu précédent (pattern React documenté), pas une ref — la
+  config ESLint de ce projet interdit `setState` dans un effet et la lecture
+  d'une ref pendant le rendu (`eslint-plugin-react-hooks` récent, aligné
+  React Compiler).
+- **Effacé à la déconnexion.** `AuthProvider.logout()` appelle
+  `clearLastPlan()` : la clé `localStorage` n'est pas rattachée à un
+  utilisateur — sans ça, sur un poste partagé, la personne suivante à se
+  connecter verrait le dernier trajet de la précédente restauré. Ne couvre
+  pas la fermeture d'onglet sans déconnexion explicite (les jetons mémoire
+  sont de toute façon déjà perdus dans ce cas ; l'exposition résiduelle reste
+  la même paire d'adresses, jamais un jeton).
 - **Accessibilité (§11, C7)** : navigation clavier complète (y compris pour
   poser origine/destination — champs lat/lng en plus du clic carte), focus
   visible, contrastes AA, région live pour l'annonce des résultats. Vérifié
@@ -68,6 +86,15 @@ trajet → voir les 3 itinéraires classés avec leur CO₂ sur une carte**.
   copie locale : `selectedIndex`/`onSelect` (portés par `TripPlanner`)
   référencent toujours l'index dans `journeys`, jamais la position affichée —
   la sélection reste donc correcte quel que soit le tri actif.
+- **Détail de l'itinéraire** (`components/planner/trip-result-card.tsx`) : à
+  la **sélection** d'une option (pas à la confirmation, §RGPD — voir la
+  décomposition ci-dessous) s'affiche le détail pas-à-pas : pour un tronçon
+  en transport en commun, ligne + direction + arrêts de montée/descente
+  (`JourneySection.line`/`headsign`/`fromStopName`/`toStopName`, envoyés par
+  `apps/api` uniquement quand `route` est non nul côté OTP). Un tronçon à
+  pied garde le format compact (mode, durée, distance) : OTP y renseigne
+  `from`/`to` avec des placeholders ("Origin"/"Destination"), jamais exposés
+  comme de vrais arrêts.
 
 ### Tracé de l'itinéraire (F2-geometry)
 

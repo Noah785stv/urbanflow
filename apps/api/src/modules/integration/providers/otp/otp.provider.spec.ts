@@ -95,39 +95,70 @@ describe('OtpProvider', () => {
       httpPost.mockReturnValue(of({ data: loadFixture('journeys.json') }));
 
       const result = await provider.getJourneys({
-        origin: { latitude: 48.1173, longitude: -1.6778 },
-        destination: { latitude: 48.1257, longitude: -1.7075 },
+        origin: { latitude: 48.1247, longitude: -1.6853 },
+        destination: { latitude: 48.0917, longitude: -1.6423 },
       });
 
       expect(result).toEqual([
         {
-          departureAt: '2026-08-17T08:04:45+02:00',
-          arrivalAt: '2026-08-17T08:26:08+02:00',
-          durationSeconds: 1283,
+          departureAt: '2026-09-02T12:14:23+02:00',
+          arrivalAt: '2026-09-02T12:53:44+02:00',
+          durationSeconds: 2361,
           sections: [
             {
               mode: TransportMode.Walk,
-              durationSeconds: 75,
-              distanceMeters: 79,
-              geometry: 'c|tdHfufIMZ?J?J?HDd@B`A@\\@FG@',
+              durationSeconds: 812,
+              distanceMeters: 915,
+              geometry:
+                'ijvdHbdhIh@jELlAFLHx@@F?D?BBNEf@RJFDL@`@D@?J?@EBCL?lBJJJDCB?D?l@BJ?D@?n@It@Cl@A\\D^?L@BKdICjAEdCD?xAFB?nDNBPQjDAzA?R@r@LA',
             },
             {
-              mode: TransportMode.Bus,
-              durationSeconds: 930,
-              distanceMeters: 5357,
+              mode: TransportMode.Metro,
+              durationSeconds: 858,
+              distanceMeters: 7207,
               geometry:
-                'a|tdHr{fIXvJ?\\QBcAG{@O{A]C?gBi@c@Gm@?a@Ho@Ty@l@k@jAmAlCcBrC}@pAORq@r@c@f@wA`B]XQDK@uBt@K@g@RAMOwDCe@YwIgAIW@ODKJ]Ne@P{B|@eK|DgBl@[JqB\\Y?oA^oIdCsAVmLvBYVAECEACC?G?C@CBABAF@FkEt@sDt@wCh@}Cl@e@He@?AKAGAGAECECCCCCCEACAE?G@CBEBEDCDADADAFAF?F?F@F@DBF@DBBBDBBD@B@F?B?F\\Fl@DbAZhHJjAJb@CBCDCDCDAFAH?L@F@DBJFHHDD@B?NnALr@^`Cl@lEEDEDCFCDELCL?HAD@J@PDJDJDHDBLHDBH@H@HAFAHEHEBEDEBGf@Tr@Jl@LdAb@?L?D@J@DBFDDBBB@D@HABABCFGBIZTZd@dAvAAF?F?FBD@DDBBBD?DAFGlCtEDNTlAgAb@?@KFwBtCqCzDe@r@`AjC@DPd@^ZPTHTP`Cz@|NDNhArA\\b@ZNrDdAtBj@dAXb@Cx@O\\GNfCj@xBtC|Kx@zCFPJJHFNDNAhCU',
+                'uvudHnviICsA?[?W?UB_@HmBF{@Ho@Hg@Je@Le@Na@P_@R_@R[V[PQNMPMTOf@YxDkBVMTOVSZ[X]Vc@LWP_@r@aBp@}AL[L_@L_@L_@Nq@Py@rByKTcAJg@Lc@L_@Pe@Rc@Ta@V]RYTUVWlAcAVUX[RSNSPYdAgBl@_AR[PURUTQZSVMVKVGZG\\Ch@AtKQj@C~@E`@AxA?bEA^@d@Bh@FhAR^F`@B^@PAVCPEPEPGPGVMNMZURUX]PWN[Re@Ne@Ja@FWDWLy@J}@zAkMFg@Fa@Fc@FYPq@Po@Tm@JUPa@NYR[zA_Cz@qAT[RWNQVSNMVOXMVKXGRCRCPAR?T@^DRDRFPFRHPJPJNNPNNNLPX`@Tb@Rd@JVHXJf@Lj@Hl@ZvBHb@H^Jf@HVN`@N\\Tb@V`@X\\ZX\\TPJPH^L^HRBR@^?RAPAl@K`AS|@Qb@IVGZMtAi@`@Od@Mb@Gj@I~Fk@zCSrAKTAN?R@L@^DpC`@f@D\\BtLNf@BnADh@BbEDf@@N?PCNCNINKLMJQHQDMDKBOBQBO@Q@e@@mG?uALcZVqk@@}A?g@?_@?]AWEm@Gk@EUE]Kc@Og@oCmJKa@I[Mk@Ik@E]AUEm@Ae@?o@@iBBcFBiAP{JB}APoc@',
+              line: 'a',
+              headsign: 'La Poterie',
+              fromStopName: 'Pontchaillou',
+              toStopName: 'La Poterie',
             },
             {
               mode: TransportMode.Walk,
-              durationSeconds: 278,
-              distanceMeters: 350,
+              durationSeconds: 691,
+              distanceMeters: 671,
               geometry:
-                'cbwdH|rlIAMbAMPAB?DAB?d@ElBSNA?G?ENELDHL@JTJj@RT@l@ANB^EAu@@KDMBQTJVC',
+                'qaodHfe`IA?@[@@?C@C@CPY@C@E?EAA?C?GAAAA?@A?AD?D?D?B?D??EAKAMCIAG?A??C?S@GDg@GA?@CYuCNGEASCCg@?gADAOa@?eA?G@E?G@G?mABqADg@FUD[FG?AOE@A?E@g@?C@G?E??U@aA?YAOEIEGi@y@We@AA',
             },
           ],
         },
       ]);
+    });
+
+    it('n’expose ligne/direction/arrêts que sur un tronçon en transport en commun (route non nul)', async () => {
+      httpPost.mockReturnValue(of({ data: loadFixture('journeys.json') }));
+
+      const result = await provider.getJourneys({
+        origin: { latitude: 48.1247, longitude: -1.6853 },
+        destination: { latitude: 48.0917, longitude: -1.6423 },
+      });
+
+      const [walkToStop, transit, walkFromStop] = result[0]?.sections ?? [];
+      expect(transit).toMatchObject({
+        line: 'a',
+        headsign: 'La Poterie',
+        fromStopName: 'Pontchaillou',
+        toStopName: 'La Poterie',
+      });
+      // Les tronçons à pied n'ont ni ligne ni arrêt réel -- OTP y renseigne
+      // `from`/`to` avec des placeholders ("Origin"/"Destination"), jamais
+      // exposés côté client (piège explicitement écarté, cf. otp.provider.ts).
+      for (const walkLeg of [walkToStop, walkFromStop]) {
+        expect(walkLeg?.line).toBeUndefined();
+        expect(walkLeg?.headsign).toBeUndefined();
+        expect(walkLeg?.fromStopName).toBeUndefined();
+        expect(walkLeg?.toStopName).toBeUndefined();
+      }
     });
 
     it('n’échoue pas et omet `geometry` si legGeometry est absent (§4)', async () => {
@@ -142,7 +173,17 @@ describe('OtpProvider', () => {
                       start: '2026-08-17T08:00:00+02:00',
                       end: '2026-08-17T08:10:00+02:00',
                       duration: 600,
-                      legs: [{ mode: 'WALK', duration: 600, distance: 800 }],
+                      legs: [
+                        {
+                          mode: 'WALK',
+                          duration: 600,
+                          distance: 800,
+                          headsign: null,
+                          route: null,
+                          from: { name: 'Origin' },
+                          to: { name: 'Destination' },
+                        },
+                      ],
                     },
                   },
                 ],
