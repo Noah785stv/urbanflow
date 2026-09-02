@@ -61,6 +61,13 @@ trajet → voir les 3 itinéraires classés avec leur CO₂ sur une carte**.
   visible, contrastes AA, région live pour l'annonce des résultats. Vérifié
   par `axe-core` (0 violation critical/serious) sur `/login`, `/register` et
   le planificateur.
+- **Tri des itinéraires** (`components/planner/trip-results.tsx`) : à partir
+  de 2 résultats, un contrôle « Trier par Durée / CO₂ / Coût » réordonne
+  l'affichage (croissant, le meilleur en premier — un coût `null` non estimé
+  trie en dernier, jamais traité comme gratuit). Le tri ne réordonne qu'une
+  copie locale : `selectedIndex`/`onSelect` (portés par `TripPlanner`)
+  référencent toujours l'index dans `journeys`, jamais la position affichée —
+  la sélection reste donc correcte quel que soit le tri actif.
 
 ### Tracé de l'itinéraire (F2-geometry)
 

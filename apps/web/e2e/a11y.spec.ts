@@ -1,6 +1,31 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
-import { API_BASE, loginViaUi, mockNetwork } from './helpers';
+import { API_BASE, fillAddress, loginViaUi, mockNetwork } from './helpers';
+
+const PLAN_RESPONSE = {
+  journeys: [
+    {
+      departureAt: '2026-08-17T08:00:00+02:00',
+      arrivalAt: '2026-08-17T08:16:00+02:00',
+      durationSeconds: 960,
+      sections: [{ mode: 'bus', durationSeconds: 960, distanceMeters: 3000 }],
+      co2Grams: 339,
+      estimatedCostCents: 180,
+      labels: ['fastest'],
+    },
+    {
+      departureAt: '2026-08-17T08:05:00+02:00',
+      arrivalAt: '2026-08-17T08:30:00+02:00',
+      durationSeconds: 1500,
+      sections: [{ mode: 'metro', durationSeconds: 1500, distanceMeters: 2600 }],
+      co2Grams: 10,
+      estimatedCostCents: 180,
+      labels: ['greenest', 'cheapest'],
+    },
+  ],
+  stale: false,
+  updatedAt: new Date().toISOString(),
+};
 
 const SUMMARY_RESPONSE = {
   totalCo2Grams: 839,
@@ -70,6 +95,33 @@ test.describe('Accessibilité — axe-core (§14 : 0 violation critical/serious)
 
     await page.getByRole('button', { name: 'Afficher la carte' }).click();
     await expect(page.locator('.leaflet-container')).toBeVisible();
+
+    const results = await new AxeBuilder({ page }).analyze();
+    expect(seriousOrCritical(results)).toEqual([]);
+  });
+
+  test('planificateur — itinéraires calculés, contrôle de tri affiché', async ({ page }) => {
+    await mockNetwork(page);
+    await page.route(`${API_BASE}/trips/plan`, async (route) => {
+      await route.fulfill({
+        status: 201,
+        contentType: 'application/json',
+        body: JSON.stringify(PLAN_RESPONSE),
+      });
+    });
+
+    await loginViaUi(page);
+    await expect(page).toHaveURL('/');
+
+    await fillAddress(page, 'Origine', 'Origine test');
+    await fillAddress(page, 'Destination', 'Destination test');
+    await page.getByRole('button', { name: 'Calculer' }).click();
+
+    // ≥ 2 itinéraires -> le contrôle de tri est affiché (état le plus à
+    // risque : un `radiogroup` supplémentaire sur la page).
+    await expect(
+      page.getByRole('radiogroup', { name: 'Critère de tri des itinéraires' }),
+    ).toBeVisible();
 
     const results = await new AxeBuilder({ page }).analyze();
     expect(seriousOrCritical(results)).toEqual([]);
