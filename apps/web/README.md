@@ -56,6 +56,17 @@ trajet → voir les 3 itinéraires classés avec leur CO₂ sur une carte**.
   shell ; la dernière réponse de `POST /trips/plan` (non cachable côté SW —
   Cache API ne gère que les GET) est mémorisée dans `localStorage`
   (`lib/last-plan-cache.ts`) et resservie si le réseau échoue.
+- **Restauration après reconnexion.** Le même `localStorage` sert aussi à
+  repeupler origine/destination et les résultats une fois l'utilisateur
+  reconnecté après un refresh (§9 : les jetons en mémoire ne survivent pas au
+  rechargement, la session se perd systématiquement — ce que ça restaure,
+  c'est le formulaire, pas la session). Lu via `useSyncExternalStore`
+  (repli serveur `null`) plutôt qu'un `useEffect`, pour rester compatible
+  SSR sans mismatch d'hydratation ; l'application de l'état restauré compare
+  la valeur au rendu précédent (pattern React documenté), pas une ref — la
+  config ESLint de ce projet interdit `setState` dans un effet et la lecture
+  d'une ref pendant le rendu (`eslint-plugin-react-hooks` récent, aligné
+  React Compiler).
 - **Accessibilité (§11, C7)** : navigation clavier complète (y compris pour
   poser origine/destination — champs lat/lng en plus du clic carte), focus
   visible, contrastes AA, région live pour l'annonce des résultats. Vérifié

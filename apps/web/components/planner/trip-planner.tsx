@@ -2,7 +2,7 @@
 
 import type { Coordinates, PlannedJourney } from '@urbanflow/shared-types';
 import dynamic from 'next/dynamic';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useSyncExternalStore } from 'react';
 import { ApiError } from '../../lib/api-client';
 import { confirmTrip } from '../../lib/carbon-api';
 import { formatCoordinatesLabel, reverseGeocode } from '../../lib/geocoding-api';
@@ -27,6 +27,13 @@ const TripMap = dynamic(() => import('./trip-map'), {
 
 type ClickTarget = 'origin' | 'destination';
 type GeoStatus = 'idle' | 'loading' | 'error';
+
+// Pas de mise à jour "live" à écouter (le cache n'est modifié que par cette
+// page elle-même, jamais en arrière-plan) -- `useSyncExternalStore` n'a
+// besoin que du repli serveur pour la sûreté d'hydratation.
+function noopSubscribe(): () => void {
+  return () => {};
+}
 
 /**
  * Résout une adresse lisible pour des coordonnées obtenues hors saisie
@@ -71,6 +78,37 @@ export function TripPlanner() {
   const [mapRequested, setMapRequested] = useState(false);
   function requestMap() {
     setMapRequested(true);
+  }
+
+  // Restauration après rechargement (§9) : les jetons ne vivant qu'en
+  // mémoire, un refresh déconnecte systématiquement -- au retour sur cette
+  // page (après reconnexion), on repeuple le formulaire et les résultats
+  // depuis le dernier trajet plutôt que de repartir d'un état vide.
+  // `useSyncExternalStore` (repli serveur `null`), pas un `useEffect` : le
+  // rendu serveur ne peut pas lire `localStorage`, ce repli garantit que le
+  // premier rendu client correspond exactement au HTML serveur (pas de
+  // mismatch d'hydratation) sans jamais appeler `setState` dans un effet.
+  const storedPlan = useSyncExternalStore(noopSubscribe, readLastPlan, () => null);
+  // « Ajuster un état quand une prop/valeur externe change » (pattern
+  // documenté par React, react.dev/learn/you-might-not-need-an-effect) :
+  // comparer à la valeur du rendu précédent via du state, pas une ref (les
+  // refs ne peuvent pas être lues pendant le rendu sous cette config lint).
+  // `storedPlan` ne change de référence qu'au tout premier rendu après
+  // hydratation (repli serveur `null` → valeur réelle) ou après un nouveau
+  // `writeLastPlan` (soumission réussie) -- dans ce second cas, ré-appliquer
+  // est sans effet, ce sont déjà les valeurs affichées.
+  const [appliedPlan, setAppliedPlan] = useState(storedPlan);
+  if (storedPlan !== appliedPlan) {
+    setAppliedPlan(storedPlan);
+    if (storedPlan) {
+      setOrigin(storedPlan.origin);
+      setOriginLabel(storedPlan.originLabel);
+      setDestination(storedPlan.destination);
+      setDestinationLabel(storedPlan.destinationLabel);
+      setJourneys(storedPlan.plan.journeys);
+      setStale(storedPlan.plan.stale);
+      setMapRequested(true);
+    }
   }
 
   function handleSelect(index: number) {
@@ -138,11 +176,11 @@ export function TripPlanner() {
       const result = await planTrip({ from: origin, to: destination });
       setJourneys(result.journeys);
       setStale(result.stale);
-      writeLastPlan(result);
+      writeLastPlan({ origin, originLabel, destination, destinationLabel, plan: result });
     } catch (error) {
-      const lastPlan = readLastPlan();
-      if (lastPlan) {
-        setJourneys(lastPlan.journeys);
+      const stored = readLastPlan();
+      if (stored) {
+        setJourneys(stored.plan.journeys);
         setStale(true);
         setIsOffline(true);
       } else {
