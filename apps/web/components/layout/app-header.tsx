@@ -33,6 +33,9 @@ export function AppHeader() {
           <Link href="/dashboard" className={NAV_LINK_CLASS}>
             Tableau de bord
           </Link>
+          <Link href="/profil" className={NAV_LINK_CLASS}>
+            Profil
+          </Link>
         </nav>
       </div>
       <div className="flex items-center gap-3">

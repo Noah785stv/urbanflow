@@ -222,6 +222,20 @@ test.describe('Accessibilité — axe-core (§14 : 0 violation critical/serious)
     expect(seriousOrCritical(results)).toEqual([]);
   });
 
+  test('page Profil (authentifiée)', async ({ page }) => {
+    await mockNetwork(page);
+
+    await loginViaUi(page);
+    await expect(page).toHaveURL('/');
+    await page.getByRole('link', { name: 'Profil' }).click();
+    await expect(page).toHaveURL('/profil');
+    await expect(page.getByRole('heading', { name: 'Mon profil' })).toBeVisible();
+    await expect(page.getByRole('status')).toHaveText('Profil chargé.');
+
+    const results = await new AxeBuilder({ page }).analyze();
+    expect(seriousOrCritical(results)).toEqual([]);
+  });
+
   for (const path of ['/confidentialite', '/mentions-legales', '/a-propos', '/403']) {
     test(path, async ({ page }) => {
       await page.goto(path, { waitUntil: 'networkidle' });
