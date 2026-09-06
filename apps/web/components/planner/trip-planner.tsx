@@ -109,7 +109,13 @@ export function TripPlanner() {
       setDestinationLabel(storedPlan.destinationLabel);
       setJourneys(storedPlan.plan.journeys);
       setStale(storedPlan.plan.stale);
-      setMapRequested(true);
+      // Pas de `setMapRequested(true)` ici (§C5 éco-conception) : un calcul
+      // fraîchement réussi ne force pas non plus l'affichage de la carte
+      // (voir `handleSubmit`) -- la restauration doit se comporter à
+      // l'identique, sans quoi la carte se charge dès l'arrivée sur la page
+      // pour quiconque a déjà cherché un trajet une fois. `origin`/`destination`
+      // restent posés dans l'état : `TripMap` les affichera dès que la carte
+      // sera effectivement sollicitée (placeholder, focus d'un champ d'adresse).
     }
   }
 
