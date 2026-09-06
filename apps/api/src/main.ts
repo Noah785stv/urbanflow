@@ -18,9 +18,16 @@ async function bootstrap(): Promise<void> {
   // En-têtes HTTP durcis (OWASP A05 — §5.7)
   app.use(helmet());
 
-  // CORS restreint à l'origine du front
+  // CORS restreint à l'origine du front — `CORS_ORIGIN` accepte une liste
+  // séparée par des virgules (ex. front local + déploiement Vercel testé via
+  // tunnel), pour ne pas avoir à re-basculer une seule valeur à chaque fois
+  // qu'on change de mode de test.
+  const corsOrigins = (process.env.CORS_ORIGIN ?? 'http://localhost:3000')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
   app.enableCors({
-    origin: process.env.CORS_ORIGIN ?? 'http://localhost:3000',
+    origin: corsOrigins,
     credentials: true,
   });
 

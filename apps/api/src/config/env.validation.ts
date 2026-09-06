@@ -28,7 +28,23 @@ export const envValidationSchema = Joi.object({
       return value;
     }, 'longueur de clé AES-256 (32 octets)')
     .required(),
-  CORS_ORIGIN: Joi.string().uri().default('http://localhost:3000'),
+  // Liste blanche CORS (§5.7 A05) — plusieurs origines séparées par des
+  // virgules (ex. front local + déploiement testé via tunnel), à ne pas
+  // confondre avec `APP_BASE_URL` (une seule URL, pour construire des liens).
+  CORS_ORIGIN: Joi.string()
+    .custom((value: string, helpers) => {
+      const origins = value.split(',').map((origin) => origin.trim());
+      const isValid = origins.every(
+        (origin) => Joi.string().uri().validate(origin).error === undefined,
+      );
+      return isValid ? value : helpers.error('any.invalid');
+    }, "liste d'origines CORS séparées par des virgules")
+    .default('http://localhost:3000'),
+  // URL du front utilisée pour construire le lien de vérification e-mail
+  // (§2 F1, hors périmètre : jamais de vrai envoi, juste journalisé en dev)
+  // -- volontairement distincte de CORS_ORIGIN, qui peut lister plusieurs
+  // origines et ne convient pas pour fabriquer un lien unique.
+  APP_BASE_URL: Joi.string().uri().default('http://localhost:3000'),
 
   // Intégration transport (F3) — §9 A10 : uniquement des hôtes configurés,
   // jamais une URL fournie par l'utilisateur.
