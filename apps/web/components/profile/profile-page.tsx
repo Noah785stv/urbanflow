@@ -53,9 +53,10 @@ export function ProfilePage() {
   const [subscriptionsText, setSubscriptionsText] = useState('');
 
   const [isSaving, setIsSaving] = useState(false);
-  const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(
-    null,
-  );
+  const [saveMessage, setSaveMessage] = useState<{
+    type: 'success' | 'error';
+    text: string;
+  } | null>(null);
 
   const [deleteStep, setDeleteStep] = useState<DeleteStep>('idle');
   const [isDeleting, setIsDeleting] = useState(false);
@@ -296,14 +297,18 @@ export function ProfilePage() {
 
                 <div className="flex flex-col gap-3 border-t border-line-200 pt-4">
                   {deleteStep === 'idle' ? (
-                    <Button type="button" variant="secondary" onClick={() => setDeleteStep('confirm')}>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={() => setDeleteStep('confirm')}
+                    >
                       Supprimer mon compte
                     </Button>
                   ) : (
                     <>
                       <p role="alert" className="text-sm font-medium text-alert-600">
-                        Cette action est définitive et immédiate : votre compte et l’historique de vos
-                        trajets seront supprimés sans délai. Confirmez-vous ?
+                        Cette action est définitive et immédiate : votre compte et l’historique de
+                        vos trajets seront supprimés sans délai. Confirmez-vous ?
                       </p>
                       {deleteErrorMessage && (
                         <p role="alert" className="text-sm font-medium text-alert-600">
