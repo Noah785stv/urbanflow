@@ -66,6 +66,7 @@ test.describe('Navigation clavier — ordre de tabulation, focus visible, absenc
 
     await pressTabAndExpect(page, 'link', 'Planifier');
     await pressTabAndExpect(page, 'link', 'Tableau de bord');
+    await pressTabAndExpect(page, 'link', 'Profil');
     await pressTabAndExpect(page, 'button', 'Se déconnecter');
     await pressTabAndExpect(page, 'button', 'Utiliser ma position');
     await pressTabAndExpect(page, 'button', 'Origine');

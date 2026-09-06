@@ -21,7 +21,7 @@ export const FOCUS_RING =
 /** Cible tactile minimale 52 px (§5). */
 export const MIN_TARGET = 'min-h-[52px]';
 
-export type ButtonVariant = 'primary' | 'secondary';
+export type ButtonVariant = 'primary' | 'secondary' | 'danger';
 
 /** Classes partagées par `Button` (action) et `LinkButton` (navigation) — même apparence, sémantique différente. */
 export const BUTTON_BASE_CLASS = `inline-flex items-center justify-center rounded-control px-6 font-semibold transition-colors ${MIN_TARGET} ${FOCUS_RING}`;
@@ -30,4 +30,9 @@ export const BUTTON_VARIANT_CLASS: Record<ButtonVariant, string> = {
   primary: 'bg-brand-blue-700 text-white hover:bg-brand-blue-900',
   secondary:
     'border border-brand-blue-700 bg-transparent text-brand-blue-700 hover:bg-brand-blue-50',
+  // Action destructrice (suppression de compte, page Profil) — seule couleur
+  // d'alerte définie par le design system (`alert-600`, pas de nuance plus
+  // sombre) : le survol reste sur la même teinte, atténuée par `opacity`
+  // plutôt que d'inventer un token non documenté.
+  danger: 'bg-alert-600 text-white hover:opacity-90',
 };
