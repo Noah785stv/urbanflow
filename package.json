@@ -4,7 +4,7 @@
   "private": true,
   "description": "UrbanFlow Mobility — plateforme de mobilité urbaine multimodale (PWA)",
   "engines": {
-    "node": "22.x",
+    "node": "20.x",
     "pnpm": ">=9"
   },
   "scripts": {
