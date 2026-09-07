@@ -61,6 +61,7 @@ describe('AuthService', () => {
           JWT_EXPIRES_IN: '15m',
           JWT_REFRESH_EXPIRES_IN: '7d',
           CORS_ORIGIN: 'http://localhost:3000',
+          APP_BASE_URL: 'http://localhost:3000',
         };
         return values[key] ?? fallback;
       }),

@@ -150,9 +150,11 @@ export class AuthService {
     );
 
     // F1 : pas d'envoi d'e-mail réel (hors périmètre — §2). Le lien est journalisé en dev.
-    const corsOrigin = this.configService.get<string>('CORS_ORIGIN');
+    // `APP_BASE_URL`, pas `CORS_ORIGIN` (qui peut lister plusieurs origines
+    // autorisées -- inadapté pour fabriquer une seule URL de lien).
+    const appBaseUrl = this.configService.get<string>('APP_BASE_URL');
     console.log(
-      `[dev] Lien de vérification e-mail pour ${user.email} : ${corsOrigin}/verify-email?token=${token}`,
+      `[dev] Lien de vérification e-mail pour ${user.email} : ${appBaseUrl}/verify-email?token=${token}`,
     );
   }
 
