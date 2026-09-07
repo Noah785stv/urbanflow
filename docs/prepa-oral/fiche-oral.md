@@ -33,10 +33,10 @@ des deux côtés, donc le front et le back ne peuvent pas se désynchroniser.
 
 ### 3. « J'avais abstrait mes sources de transport derrière une interface, TransportProvider. Le planificateur et le calcul carbone ne dépendent pas d'une API précise, mais de cette interface. »
 
-Une **interface** est un **contrat** : elle dit *quelles* fonctions existent (ex.
-« calcule-moi des itinéraires ») sans dire *comment*. Chaque source réelle (Navitia,
+Une **interface** est un **contrat** : elle dit _quelles_ fonctions existent (ex.
+« calcule-moi des itinéraires ») sans dire _comment_. Chaque source réelle (Navitia,
 puis OTP) fournit sa propre version qui **respecte ce contrat**. « **Abstraire** »,
-c'est justement séparer le *quoi* du *comment*. Résultat : mon planificateur ne parle
+c'est justement séparer le _quoi_ du _comment_. Résultat : mon planificateur ne parle
 qu'au contrat, jamais directement à Navitia ou OTP. Donc quand j'ai changé de
 fournisseur, j'ai juste branché une nouvelle implémentation du même contrat — sans
 toucher au planificateur ni au calcul carbone.

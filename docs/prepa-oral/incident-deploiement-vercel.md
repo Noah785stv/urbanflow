@@ -1,6 +1,6 @@
 # Incident déploiement Vercel — préparation orale (6-7 septembre)
 
-> Objectif : pouvoir expliquer *pourquoi* il n'y a pas de site en ligne à jour
+> Objectif : pouvoir expliquer _pourquoi_ il n'y a pas de site en ligne à jour
 > pour la soutenance, sans avoir l'air de subir le problème — en montrant la
 > démarche de diagnostic. Un jury de certification évalue autant la méthode que
 > le résultat : sais-tu isoler des variables, documenter, et savoir quand
@@ -32,14 +32,14 @@ champ entièrement, en repartant de `main` : échoue encore. Revenir sur l'autre
 changement du même commit historique (`engines.node` : `">=22"` vs `"22.x"`) :
 échoue aussi. Piste dans une impasse malgré l'A/B le plus propre possible.
 
-| Piste testée | Résultat |
-| :--- | :--- |
-| Version de Node (plusieurs versions) | Échec identique |
-| pnpm 9.15.9, 10.28.0 (exactement la version qui marchait ailleurs), 10.34.5 | Échec identique dans les 3 cas |
-| Activer/désactiver Corepack, présence/absence de `packageManager` | Échec dans toutes les combinaisons |
-| `engines.node` (`">=22"` vs `"22.x"`) | Aucun changement |
-| `NODE_OPTIONS=--no-experimental-fetch` | Échec identique |
-| Remplacer `pnpm install` par `npm install` | Structurellement impossible : npm ne comprend pas `workspace:*` (protocole pnpm pour lier les packages du monorepo) |
+| Piste testée                                                                | Résultat                                                                                                            |
+| :-------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------ |
+| Version de Node (plusieurs versions)                                        | Échec identique                                                                                                     |
+| pnpm 9.15.9, 10.28.0 (exactement la version qui marchait ailleurs), 10.34.5 | Échec identique dans les 3 cas                                                                                      |
+| Activer/désactiver Corepack, présence/absence de `packageManager`           | Échec dans toutes les combinaisons                                                                                  |
+| `engines.node` (`">=22"` vs `"22.x"`)                                       | Aucun changement                                                                                                    |
+| `NODE_OPTIONS=--no-experimental-fetch`                                      | Échec identique                                                                                                     |
+| Remplacer `pnpm install` par `npm install`                                  | Structurellement impossible : npm ne comprend pas `workspace:*` (protocole pnpm pour lier les packages du monorepo) |
 
 Un ticket support est ouvert chez Vercel. Leur première réponse automatisée
 (IA) recommandait de désactiver Corepack — contredit par nos propres logs
@@ -59,11 +59,11 @@ unhandledRejection ReferenceError: Request is not defined
 Deux hypothèses concrètes testées, toutes les deux éliminées par une
 reproduction locale qui **réussit** (donc le bug ne s'y manifeste pas) :
 
-| Hypothèse | Test | Résultat |
-| :--- | :--- | :--- |
-| Télémétrie Next.js (appel réseau au démarrage du build) | `NEXT_TELEMETRY_DISABLED=1` sur Vercel, redeploy | Échec identique |
-| Comportement spécifique déclenché par la détection "je tourne sur Vercel" | `VERCEL=1 CI=1 VERCEL_ENV=production` forcés en local | Build **réussi** en local avec ces variables |
-| Différence Windows (poste local) / Linux (infra Vercel), ex. casse de fichier | Build dans un vrai conteneur Docker `node:22-slim` (Linux), mêmes variables Vercel forcées | Build **réussi** dans ce conteneur aussi |
+| Hypothèse                                                                     | Test                                                                                       | Résultat                                     |
+| :---------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------- | :------------------------------------------- |
+| Télémétrie Next.js (appel réseau au démarrage du build)                       | `NEXT_TELEMETRY_DISABLED=1` sur Vercel, redeploy                                           | Échec identique                              |
+| Comportement spécifique déclenché par la détection "je tourne sur Vercel"     | `VERCEL=1 CI=1 VERCEL_ENV=production` forcés en local                                      | Build **réussi** en local avec ces variables |
+| Différence Windows (poste local) / Linux (infra Vercel), ex. casse de fichier | Build dans un vrai conteneur Docker `node:22-slim` (Linux), mêmes variables Vercel forcées | Build **réussi** dans ce conteneur aussi     |
 
 Le troisième test est le plus rigoureux possible sans accès direct aux
 machines de build Vercel : OS identique (Linux), version de Node identique,
@@ -95,6 +95,7 @@ inscription/connexion, planificateur de trajet, tableau de bord carbone.
 
 **Fonctionnel uniquement en local** (vérifié : `pnpm dev`, tests unitaires et
 e2e tous verts) :
+
 - Tri/filtre des résultats de trajet par durée, CO2, coût
 - Détail ligne/direction/arrêts d'un itinéraire sélectionné
 - Restauration du dernier trajet recherché après reconnexion
@@ -116,27 +117,27 @@ le dissimuler ou de espérer qu'il ne soit pas remarqué.
 
 ## Questions probables du jury → ta réponse
 
-- *« Pourquoi pas de démonstration en ligne ? »*
+- _« Pourquoi pas de démonstration en ligne ? »_
   → Deux bugs distincts et successifs sur l'infrastructure de build Vercel
   (échec d'installation des dépendances, puis échec de compilation sur le seul
   commit qui installait), tous les deux isolés méthodiquement, ticket support
   ouvert, non résolus à ce jour malgré une quinzaine de tests A/B ciblés.
   Démonstration en local à la place.
 
-- *« Comment savez-vous que ce n'est pas un problème de votre côté ? »*
+- _« Comment savez-vous que ce n'est pas un problème de votre côté ? »_
   → Pour chaque bug, testé en variant tout ce qu'on contrôle (versions de
   Node/pnpm, Corepack, variables d'environnement, jusqu'à reproduire l'OS de
   Vercel dans un conteneur Linux) — comportement rigoureusement identique à
   chaque fois côté Vercel, et succès à chaque fois en dehors. Un problème dans
   notre code varierait avec ces changements ; ici, rien ne le fait varier.
 
-- *« Qu'auriez-vous fait avec plus de temps ? »*
+- _« Qu'auriez-vous fait avec plus de temps ? »_
   → Contacter le support Vercel avec ces preuves précises (plutôt que le
   ticket générique déjà ouvert), ou tenter un hébergeur alternatif (Netlify,
   Render) — écarté ici faute de temps avant la soutenance, pas par manque de
   solution.
 
-- *« Pourquoi ne pas avoir essayé un autre hébergeur ? »*
+- _« Pourquoi ne pas avoir essayé un autre hébergeur ? »_
   → Décision consciente de priorisation : redévelopper la config de
   déploiement sur une autre plateforme, à 1-2 jours de l'oral, était un risque
   plus grand que de préparer une démonstration locale solide et déjà

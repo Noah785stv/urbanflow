@@ -4,8 +4,4 @@ Jetons en mémoire uniquement (module JS, pas de localStorage/cookie) — choix 
 
 Le raisonnement : stocker le token en localStorage l'expose à n'importe quel XSS (lisible par du JS injecté) ; le garder uniquement en mémoire JS élimine cette classe de risque, au prix de perdre la session au refresh. Le vrai fix propre (cookies httpOnly, invisibles au JS) est explicitement noté comme un incrément futur, pas encore fait. Donc : pas un bug, un compromis sécurité assumé et documenté — mais pas encore l'état final voulu.
 
---------------------------------------------------------------
-
-
-
-
+---

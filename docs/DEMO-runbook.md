@@ -34,30 +34,37 @@ Le géocodage IGN et les tuiles OSM sont appelés directement par le navigateur
 ## Procédure — jour de l'oral (~15 min avant le passage)
 
 ### 1. Lancer Docker Desktop, puis les conteneurs
+
 ```powershell
 pnpm db:up
 docker ps        # attendre postgres / redis / otp en "healthy" (OTP ~30-60 s)
 ```
 
 ### 2. Backend
+
 ```powershell
 pnpm --filter ./apps/api start:dev
 # attendre : "Nest application successfully started"
 ```
+
 Laisse ce terminal ouvert.
 
 ### 3. Front (nouveau terminal)
+
 ```powershell
 pnpm --filter web dev
 ```
+
 → `http://localhost:3000`.
 
 ### 4. Vérifier `.env`
+
 `CORS_ORIGIN` doit au minimum contenir `http://localhost:3000`. Pas besoin de
 liste multi-origines pour une démo 100 % locale (ça, c'était pour le plan
 hybride local+en ligne, abandonné avec le site en ligne).
 
 ### 5. Checklist finale
+
 - [ ] Backend : "Nest application successfully started"
 - [ ] `docker ps` : postgres / redis / otp tous "healthy"
 - [ ] Front accessible sur `localhost:3000`
@@ -72,15 +79,16 @@ hybride local+en ligne, abandonné avec le site en ligne).
 
 ## Pièges rencontrés (déjà vécus — ne pas retomber dedans)
 
-| Symptôme | Cause | Fix |
-| :---- | :---- | :---- |
+| Symptôme                                                           | Cause                                                                                                         | Fix                                                                                                                                      |
+| :----------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------ | :--------------------------------------------------------------------------------------------------------------------------------------- |
 | API : `Config validation error: "CORS_ORIGIN" must be a valid uri` | Ancien format `CORS_ORIGIN` avant le fix multi-origines, ou dossier de travail sur une branche qui ne l'a pas | Vérifier `git log` a bien `fix(api): support multiple CORS origins` ; sinon `CORS_ORIGIN=http://localhost:3000` suffit seul en local pur |
-| Connexion OK mais trajet vide | Graphe OTP non chargé | `docker logs urbanflow-otp` → `Transit loaded \|Stops\|` non nul |
-| Docker Desktop pas lancé | Oubli, ou machine en veille depuis la dernière session | Relancer Docker Desktop, attendre qu'il soit prêt avant `pnpm db:up` |
+| Connexion OK mais trajet vide                                      | Graphe OTP non chargé                                                                                         | `docker logs urbanflow-otp` → `Transit loaded \|Stops\|` non nul                                                                         |
+| Docker Desktop pas lancé                                           | Oubli, ou machine en veille depuis la dernière session                                                        | Relancer Docker Desktop, attendre qu'il soit prêt avant `pnpm db:up`                                                                     |
 
 ---
 
 ## Après l'oral
+
 - `Ctrl+C` dans le terminal du front et celui de l'API.
 - `pnpm db:down` pour arrêter les conteneurs.
 
@@ -110,6 +118,7 @@ pnpm db:up && docker ps
 pnpm --filter ./apps/api start:dev
 cloudflared tunnel --url http://localhost:3001    # terminal séparé, PowerShell classique
 ```
+
 Puis dans Vercel : `NEXT_PUBLIC_API_URL` = `https://<tunnel>.trycloudflare.com/api/v1`
 (type Config), et `CORS_ORIGIN` local sur
 `http://localhost:3000,https://urban-flow-mobility.vercel.app` — puis

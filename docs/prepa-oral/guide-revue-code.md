@@ -3,8 +3,8 @@
 > Objectif : pouvoir **expliquer chaque zone avec tes mots** et **défendre chaque
 > choix** devant le jury. Ce n'est pas du par-cœur : relis les fichiers indiqués en
 > te posant les questions ci-dessous, puis **entraîne-toi à répondre à voix haute**.
-> Règle d'or : si tu sais expliquer *pourquoi* un choix a été fait (pas seulement
-> *ce que* fait le code), tu as gagné. Ouvre les vrais fichiers de ton projet en
+> Règle d'or : si tu sais expliquer _pourquoi_ un choix a été fait (pas seulement
+> _ce que_ fait le code), tu as gagné. Ouvre les vrais fichiers de ton projet en
 > parallèle — les noms ci-dessous sont indicatifs.
 
 ---
@@ -17,6 +17,7 @@ base + `RoutingProvider` / `TransitProvider` / `SharedMobilityProvider`), le
 Réf : **ADR-005**.
 
 ### Ce que tu dois savoir expliquer
+
 - **Le rôle de l'abstraction** : le cœur de l'appli (planificateur F2, calcul carbone)
   ne dépend **pas** d'une API précise, mais d'une **interface**. Ajouter ou remplacer
   une source = implémenter l'interface, sans toucher au reste.
@@ -34,22 +35,24 @@ Réf : **ADR-005**.
   le problème `distanceMeters = 0` qu'on avait avec Navitia.
 
 ### Questions probables du jury → ta réponse
-- *« Pourquoi cette abstraction plutôt qu'appeler Navitia directement ? »*
+
+- _« Pourquoi cette abstraction plutôt qu'appeler Navitia directement ? »_
   → Découplage, testabilité, et capacité à changer de fournisseur. Preuve : je l'ai
   fait pour de vrai.
-- *« Qu'avez-vous dû modifier en passant à OTP ? »*
+- _« Qu'avez-vous dû modifier en passant à OTP ? »_
   → Uniquement ajouter le `OtpRoutingProvider` et l'enregistrer. Le planificateur et
   le carbone sont restés intacts. (Sache **montrer** que F2 n'importe pas OTP.)
-- *« Comment ajouteriez-vous un nouvel opérateur (ex. un autre réseau) ? »*
+- _« Comment ajouteriez-vous un nouvel opérateur (ex. un autre réseau) ? »_
   → J'implémente l'interface correspondante et je l'enregistre dans le registre.
-- *« Comment testez-vous sans appeler l'API réelle ? »*
+- _« Comment testez-vous sans appeler l'API réelle ? »_
   → Le `HttpService` est mocké, avec des **fixtures** (vraies réponses capturées). Zéro
   appel réseau en CI.
-- *« Pourquoi OTP et pas rester sur Navitia payant ou un autre ? »*
+- _« Pourquoi OTP et pas rester sur Navitia payant ou un autre ? »_
   → Gratuit, souverain (auto-hébergé, données open data), c'était mon **repli
   documenté** (§2.5), et il fournit la distance par tronçon.
 
 ### Pièges
+
 - Ne prétends **pas** que le GBFS (vélos/trottinettes) est affiché dans l'UI : il est
   implémenté côté données mais **pas exposé** côté front (évolution identifiée).
 - Sache dire que les **tuiles de carte** et le **géocodage IGN** sont appelés par le
@@ -64,6 +67,7 @@ Réf : **ADR-005**.
 de **Redis** pour les refresh tokens, le hachage **bcrypt**.
 
 ### Ce que tu dois savoir expliquer
+
 - **Inscription** : e-mail unique, mot de passe **≥ 12 caractères**, haché en **bcrypt
   (coût 12)**, jamais stocké en clair ni renvoyé. Token de vérification e-mail en Redis.
 - **Connexion** : `bcrypt.compare` vérifie le mot de passe, puis émission d'un **access
@@ -72,7 +76,7 @@ de **Redis** pour les refresh tokens, le hachage **bcrypt**.
   le refresh permet de renouveler **et** d'être **révoqué**.
 - **Révocation** : le refresh token est suivi dans **Redis** ; `logout` le supprime ;
   `refresh` vérifie sa présence avant d'émettre un nouvel access.
-- **Guards** : un *Guard* NestJS intercepte la requête **avant** le contrôleur et
+- **Guards** : un _Guard_ NestJS intercepte la requête **avant** le contrôleur et
   autorise ou non. `JwtAuthGuard` valide le token et attache l'utilisateur ;
   `RolesGuard` vérifie le rôle (`citizen` / `premium` / `admin`) — c'est le **RBAC**.
 - **`@CurrentUser`** : l'utilisateur vient **toujours du JWT vérifié**, jamais d'un ID
@@ -83,21 +87,23 @@ de **Redis** pour les refresh tokens, le hachage **bcrypt**.
   passe qui est faux.
 
 ### Questions probables du jury → ta réponse
-- *« Différence entre access token et refresh token ? »* → durée de vie + rôle
+
+- _« Différence entre access token et refresh token ? »_ → durée de vie + rôle
   (accès court vs renouvellement révocable). Voir ci-dessus.
-- *« Comment révoquez-vous un token ? »* → suppression du refresh en Redis.
-- *« Où stockez-vous le token côté front ? »* → **en mémoire** (état React), pas en
+- _« Comment révoquez-vous un token ? »_ → suppression du refresh en Redis.
+- _« Où stockez-vous le token côté front ? »_ → **en mémoire** (état React), pas en
   localStorage — pour limiter le risque XSS. (Sache dire que le durcissement idéal
   serait des cookies httpOnly.)
-- *« Comment empêchez-vous un utilisateur d'accéder aux données d'un autre ? »*
+- _« Comment empêchez-vous un utilisateur d'accéder aux données d'un autre ? »_
   → `@CurrentUser` depuis le JWT, jamais d'ID client → IDOR impossible par conception.
   Testé (deux utilisateurs, « appartenance stricte »).
-- *« Pourquoi bcrypt et pas un hash classique (SHA-256) ? »* → bcrypt est **lent et
+- _« Pourquoi bcrypt et pas un hash classique (SHA-256) ? »_ → bcrypt est **lent et
   salé** par conception, donc résistant au brute-force ; le coût 12 règle cette lenteur.
-- *« C'est quoi un Guard ? »* → un intercepteur d'autorisation avant le handler.
+- _« C'est quoi un Guard ? »_ → un intercepteur d'autorisation avant le handler.
 - Mapping OWASP : **A01** (contrôle d'accès), **A07** (échecs d'authentification).
 
 ### Pièges
+
 - **Authentification** (qui es-tu) ≠ **autorisation** (as-tu le droit) — ne les confonds
   pas.
 - Ne dis pas « je chiffre les mots de passe » : ils sont **hachés** (voir Zone 3).
@@ -112,6 +118,7 @@ l'entité `carbon_log` (minimisation), `deleteAccount`, la gestion du **consente
 géoloc, `main.ts` (**Helmet/CSP**, `ValidationPipe`).
 
 ### LE point à maîtriser absolument : hachage ≠ chiffrement
+
 - **Hachage (bcrypt)** = **sens unique**, irréversible. Pour les **mots de passe** : on
   ne les récupère jamais, on compare des empreintes.
 - **Chiffrement (AES-256-GCM)** = **réversible** avec la clé. Pour le **domicile/travail**
@@ -120,6 +127,7 @@ géoloc, `main.ts` (**Helmet/CSP**, `ValidationPipe`).
   passe, je chiffre le domicile/travail. »
 
 ### Ce que tu dois savoir expliquer
+
 - **AES-256-GCM** : chiffrement symétrique **authentifié** — le mode GCM garantit à la
   fois la **confidentialité** et l'**intégrité** (détecte toute altération). Clé de 32
   octets via `ENCRYPTION_KEY` (jamais commitée), un IV par chiffrement.
@@ -137,20 +145,22 @@ géoloc, `main.ts` (**Helmet/CSP**, `ValidationPipe`).
   relâchée uniquement sur `/api/docs`.
 
 ### Questions probables du jury → ta réponse
-- *« Différence entre hacher et chiffrer ? »* → voir encadré ci-dessus. **La** question.
-- *« Pourquoi GCM ? »* → chiffrement authentifié : confidentialité **+** intégrité.
-- *« Où est la clé de chiffrement ? »* → variable d'environnement, hors du dépôt. (Sache
+
+- _« Différence entre hacher et chiffrer ? »_ → voir encadré ci-dessus. **La** question.
+- _« Pourquoi GCM ? »_ → chiffrement authentifié : confidentialité **+** intégrité.
+- _« Où est la clé de chiffrement ? »_ → variable d'environnement, hors du dépôt. (Sache
   dire qu'en production réelle, un gestionnaire de secrets / KMS serait plus robuste.)
-- *« Si on vole votre base de données, qu'est-ce qui est exposé ? »* → les mots de passe
+- _« Si on vole votre base de données, qu'est-ce qui est exposé ? »_ → les mots de passe
   sont hachés (bcrypt), le domicile/travail chiffrés (inutilisables sans la clé) →
   exposition limitée.
-- *« Comment respectez-vous le RGPD ? »* → minimisation, consentement explicite, droit à
+- _« Comment respectez-vous le RGPD ? »_ → minimisation, consentement explicite, droit à
   l'effacement (suppression immédiate), chiffrement des données sensibles.
-- *« Comment évitez-vous les injections SQL ? »* → requêtes paramétrées + validation des
+- _« Comment évitez-vous les injections SQL ? »_ → requêtes paramétrées + validation des
   entrées.
 - Mapping OWASP : **A02** (crypto), **A03** (injection), **A05** (config).
 
 ### Pièges
+
 - Ne jamais dire « mot de passe chiffré » → **haché**.
 - Sache que la clé de chiffrement dans un `.env` est un compromis de prototype (à
   assumer), pas la solution de production idéale.
