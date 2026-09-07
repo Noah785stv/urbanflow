@@ -41,7 +41,17 @@ export default function RootLayout({
       lang="fr"
       className={`${ibmPlexSans.variable} ${ibmPlexMono.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col bg-surface-50 text-ink-900">
+      {/* `suppressHydrationWarning` scopé à `<body>` : certaines extensions
+          navigateur (ex. ColorZilla, `cz-shortcut-listen`) injectent un
+          attribut sur `<body>` avant l'hydratation React — un faux mismatch
+          hors de notre contrôle, pas un vrai bug applicatif (cf. le message
+          React lui-même : "can happen if the client has a browser extension
+          installed"). Le pattern recommandé par React pour ce cas précis :
+          n'ignore que les attributs de CET élément, jamais son contenu. */}
+      <body
+        className="flex min-h-full flex-col bg-surface-50 text-ink-900"
+        suppressHydrationWarning
+      >
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded focus:bg-brand-blue-700 focus:px-4 focus:py-2 focus:text-white"
