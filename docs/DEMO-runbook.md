@@ -1,140 +1,72 @@
 # Runbook de démo — UrbanFlow Mobility
 
-> Mode d'emploi pour présenter la solution le jour de l'oral : le site en ligne
-> (Vercel) **et** un front local, **en même temps**, tous les deux branchés sur le
-> même backend (ta machine, exposée par un tunnel Cloudflare gratuit pour le site en
-> ligne). Testé de bout en bout. À dérouler tel quel le jour J.
+> Mode d'emploi pour présenter la solution le jour de l'oral : **en local**,
+> intégralement. Le site en ligne (Vercel) ne peut plus être redéployé depuis
+> plusieurs jours (deux bugs distincts et successifs sur leur infra de build,
+> détail complet et démarche de diagnostic dans
+> [`incident-deploiement-vercel.md`](prepa-oral/incident-deploiement-vercel.md)
+> — utile pour répondre au jury si la question vient). Le site déjà en ligne
+> reste figé à un ancien état (avant les fonctionnalités récentes) et n'est
+> **pas** utilisé pour la démo.
 
-## Architecture
+---
+
+## Architecture (locale)
 
 ```
-Navigateur du jury
-      │ (HTTPS)
+Ton navigateur
+      │
       ▼
-Front Next.js ─────► Vercel  (https://urban-flow-mobility.vercel.app)
-      │ appels API (HTTPS)
+Front Next.js (localhost:3000)
+      │ appels API
       ▼
-Tunnel Cloudflare  (https://<mots-aléatoires>.trycloudflare.com)
-      │ expose le port 3001
+API NestJS (localhost:3001)
+      │
       ▼
-Ta machine :  API NestJS (localhost:3001)
-              docker compose → Postgres (5433), Redis (6379), OTP (8081)
+docker compose → Postgres (5433), Redis (6379), OTP (8081)
 ```
 
-Le tunnel n'expose **que** l'API (3001). Postgres/Redis/OTP restent internes. Le
-géocodage IGN et les tuiles OSM sont appelés directement par le navigateur (publics).
+Le géocodage IGN et les tuiles OSM sont appelés directement par le navigateur
+(publics, aucune dépendance à un hébergement quelconque).
 
 ---
 
-## ⚠️ État actuel : le site en ligne n'a pas les dernières fonctionnalités
+## Procédure — jour de l'oral (~15 min avant le passage)
 
-Détail complet, arguments et pistes déjà épuisées :
-[`incident-deploiement-vercel.md`](prepa-oral/incident-deploiement-vercel.md).
-
-Résumé : `pnpm install` échoue systématiquement sur l'infra de build Vercel (bug
-externe, ticket support ouvert, jamais reproduit en local). Le site en ligne est donc
-figé à un ancien commit et **n'a pas** : tri/filtre des résultats, détail
-ligne/direction/arrêts, restauration du dernier trajet, le fix de chargement différé
-de la carte, ni la page Profil. Toutes ces fonctionnalités sont testées et
-fonctionnelles **en local uniquement**.
-
-D'où la section ci-dessous : faire tourner les deux **en même temps** pendant l'oral,
-et basculer d'un onglet à l'autre selon la fonctionnalité à montrer.
-
----
-
-## Setup unique (déjà fait — pour mémoire, à ne pas refaire)
-
-- **Vercel → Settings** : Root Directory = `apps/web`, Framework = **Next.js**,
-  « Include files outside the root directory » = **Enabled**.
-- Correctif build monorepo appliqué (`next.config.ts`).
-- **cloudflared** installé (`winget install --id Cloudflare.cloudflared`).
-- **CORS** : `CORS_ORIGIN` dans le `.env` **local** accepte une liste séparée par des
-  virgules (`apps/api/src/config/env.validation.ts` + `main.ts`) — nécessaire
-  puisque le même backend doit maintenant répondre à **deux origines** (le site
-  Vercel **et** le front local, voir section suivante) :
-  ```
-  CORS_ORIGIN=http://localhost:3000,https://urban-flow-mobility.vercel.app
-  ```
-  > ⚠️ Ce support multi-origines vit sur la branche `fix/cors-multi-origin`, pas
-  > encore fusionnée dans `main` au moment d'écrire ces lignes. **Vérifier qu'elle
-  > est mergée avant le jour J** — sans elle, `CORS_ORIGIN` n'accepte qu'une seule
-  > valeur, et l'un des deux fronts (local ou Vercel) sera bloqué par CORS.
-
----
-
-## Faire tourner local + en ligne en même temps (recommandé pour l'oral)
-
-Le tunnel Cloudflare et la démo locale utilisent **le même backend** — pas besoin de
-deux instances, ni de deux bases de données. On lance tout une seule fois, et les deux
-fronts (local et Vercel) tapent dessus en parallèle.
-
-### 1. Backend + Docker (comme d'habitude)
+### 1. Lancer Docker Desktop, puis les conteneurs
 ```powershell
 pnpm db:up
 docker ps        # attendre postgres / redis / otp en "healthy" (OTP ~30-60 s)
+```
+
+### 2. Backend
+```powershell
 pnpm --filter ./apps/api start:dev
 # attendre : "Nest application successfully started"
 ```
+Laisse ce terminal ouvert.
 
-### 2. Front local (nouveau terminal)
+### 3. Front (nouveau terminal)
 ```powershell
 pnpm --filter web dev
 ```
-→ `http://localhost:3000`. Garde cet onglet pour tout ce qui n'est **pas** en ligne
-(voir tableau plus bas).
+→ `http://localhost:3000`.
 
-### 3. Tunnel (nouveau terminal — PowerShell classique, pas celui de VS Code)
-```powershell
-cloudflared tunnel --url http://localhost:3001
-```
-→ note l'URL affichée : `https://<mots>.trycloudflare.com`. Laisse ce terminal
-ouvert : si tu le fermes, l'URL meurt et le site en ligne perd son backend.
+### 4. Vérifier `.env`
+`CORS_ORIGIN` doit au minimum contenir `http://localhost:3000`. Pas besoin de
+liste multi-origines pour une démo 100 % locale (ça, c'était pour le plan
+hybride local+en ligne, abandonné avec le site en ligne).
 
-### 4. Pointer le front Vercel vers le tunnel
-- **Vercel → Settings → Environment Variables** → `NEXT_PUBLIC_API_URL`
-  - Valeur = `https://<mots>.trycloudflare.com/api/v1` (⚠️ avec `/api/v1` au bout)
-  - Type = **Config** (pas « Secret » : injectée dans le code du navigateur, donc
-    déjà publique)
-- **Deployments** → la ligne `main` · `Production` · `Ready` → **⋯ → Redeploy**
-  → **décoche** « Use existing Build Cache » → confirmer.
-
-### 5. Vérifier les deux
-- Onglet **en ligne** (`urban-flow-mobility.vercel.app`) : connexion, planifier un
-  trajet, tableau de bord carbone.
-- Onglet **local** (`localhost:3000`) : pareil, **et en plus** tri/filtre, détail
-  d'itinéraire, page Profil.
-
-### Qui montre quoi
-| Fonctionnalité | Onglet |
-| :--- | :--- |
-| Inscription / connexion | en ligne **ou** local (les deux marchent) |
-| Planifier un trajet, dashboard carbone | en ligne **ou** local |
-| Tri/filtre des résultats | **local uniquement** |
-| Détail ligne/direction/arrêts | **local uniquement** |
-| Restauration du dernier trajet après reconnexion | **local uniquement** |
-| Carte différée (placeholder avant clic) | **local uniquement** |
-| Page Profil | **local uniquement** |
-
-Ouvrir avec l'onglet en ligne en premier (« voici un vrai déploiement qui tourne »),
-puis basculer sur le local pour le reste, en assumant directement pourquoi (cf.
-l'encart plus haut) plutôt que de laisser le jury deviner l'écart.
-
----
-
-## Checklist finale (~15 min avant le passage)
-
-Une fois les 5 étapes de la section précédente déroulées :
-- [ ] Backend : "Nest application successfully started" dans le terminal A
+### 5. Checklist finale
+- [ ] Backend : "Nest application successfully started"
 - [ ] `docker ps` : postgres / redis / otp tous "healthy"
-- [ ] Tunnel actif, terminal ouvert (B)
-- [ ] Front local accessible sur `localhost:3000` (terminal C)
-- [ ] Site en ligne redéployé avec la bonne `NEXT_PUBLIC_API_URL`, connexion +
-      planification testées dessus (F12 → Réseau/Console pour repérer une erreur CORS
-      ou 404 tout de suite plutôt que devant le jury)
-- [ ] Filet de sécurité : si le wifi de la salle lâche, tout reste utilisable en
-      local seul (le front local ne dépend pas d'Internet, juste du backend sur cette
-      machine)
+- [ ] Front accessible sur `localhost:3000`
+- [ ] Test à blanc : connexion, planifier un trajet (2 adresses rennaises) →
+      itinéraires + tracé, tri/filtre, détail d'un itinéraire, enregistrer un
+      trajet → tableau de bord carbone, page Profil
+- [ ] Filet de sécurité supplémentaire : si un souci de dernière minute
+      empêche de lancer en direct, avoir une capture d'écran ou un
+      enregistrement du parcours déjà testé, en secours
 
 ---
 
@@ -142,24 +74,43 @@ Une fois les 5 étapes de la section précédente déroulées :
 
 | Symptôme | Cause | Fix |
 | :---- | :---- | :---- |
-| `cloudflared n'est pas reconnu` | PATH pas rechargé | Ouvrir un **nouveau** terminal |
-| Redeploy retombe en Error | Mauvaise ligne redéployée (vieux commit) | Redéployer la ligne **main / Production / Ready** |
-| Vercel râle sur la variable | Type « Secret » | Passer `NEXT_PUBLIC_API_URL` en **Config** |
-| 404 sur les appels API | `/api/v1` en trop ou manquant | Ajuster le suffixe de `NEXT_PUBLIC_API_URL` |
-| Erreur CORS en console (local **ou** Vercel, jamais les deux à la fois) | `CORS_ORIGIN` n'a qu'une seule valeur au lieu de la liste des deux origines | `CORS_ORIGIN=http://localhost:3000,https://urban-flow-mobility.vercel.app` dans `.env` + relancer l'API |
+| API : `Config validation error: "CORS_ORIGIN" must be a valid uri` | Ancien format `CORS_ORIGIN` avant le fix multi-origines, ou dossier de travail sur une branche qui ne l'a pas | Vérifier `git log` a bien `fix(api): support multiple CORS origins` ; sinon `CORS_ORIGIN=http://localhost:3000` suffit seul en local pur |
 | Connexion OK mais trajet vide | Graphe OTP non chargé | `docker logs urbanflow-otp` → `Transit loaded \|Stops\|` non nul |
-| Tout marchait, puis plus rien | Tunnel redémarré → **URL changée** | Reporter la nouvelle URL dans Vercel + **redeploy** |
-| Fonctionnalité visible en local mais pas sur le site Vercel | Normal, pas un bug — voir l'encart en haut de ce document | Montrer cette fonctionnalité sur l'onglet local |
+| Docker Desktop pas lancé | Oubli, ou machine en veille depuis la dernière session | Relancer Docker Desktop, attendre qu'il soit prêt avant `pnpm db:up` |
 
 ---
 
 ## Après l'oral
-- `Ctrl+C` dans le terminal du tunnel (l'URL `trycloudflare` meurt, normal).
-- `Ctrl+C` dans le terminal du front local et celui de l'API.
+- `Ctrl+C` dans le terminal du front et celui de l'API.
 - `pnpm db:down` pour arrêter les conteneurs.
 
 ## Note d'architecture (pour l'oral)
 
-« Front déployé sur l'edge Vercel ; backend conteneurisé (Docker) exposé via un tunnel
-sécurisé Cloudflare pour la démonstration ; cible de production : hébergement européen
-type Scaleway, conformément à l'ADR hébergement. » — récit cohérent et mature.
+« Le front est prévu pour un déploiement Vercel edge et le backend pour un
+hébergement européen conteneurisé (cible ADR hébergement) — l'architecture
+est prête pour ça et a déjà tourné en ligne. La démonstration du jour se fait
+en local suite à un incident d'infrastructure côté Vercel, documenté et
+diagnostiqué méthodiquement (voir le document d'incident). » — assume le
+sujet directement, ne le laisse pas deviner.
+
+---
+
+## Annexe — procédure en ligne (hors service depuis le 6-7 septembre)
+
+Conservée pour mémoire / si le bug Vercel venait à se résoudre plus tard.
+**Ne pas essayer de dérouler ça pour la soutenance** sans avoir d'abord
+vérifié qu'un déploiement récent construit à nouveau (voir le document
+d'incident pour le dernier statut connu).
+
+Architecture prévue : front sur Vercel, backend exposé par un tunnel
+Cloudflare gratuit vers la machine locale.
+
+```powershell
+pnpm db:up && docker ps
+pnpm --filter ./apps/api start:dev
+cloudflared tunnel --url http://localhost:3001    # terminal séparé, PowerShell classique
+```
+Puis dans Vercel : `NEXT_PUBLIC_API_URL` = `https://<tunnel>.trycloudflare.com/api/v1`
+(type Config), et `CORS_ORIGIN` local sur
+`http://localhost:3000,https://urban-flow-mobility.vercel.app` — puis
+redéployer la ligne `main` / `Production` / `Ready` sans cache.
